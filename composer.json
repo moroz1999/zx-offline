@@ -1,0 +1,21 @@
+{
+  "name": "moroz1999/zx-offline",
+  "description": "Offline archive copy generator for ZX-Art",
+  "type": "project",
+  "require": {
+    "guzzlehttp/guzzle": "^7.9",
+    "symfony/console": "^7.3",
+    "php-di/php-di": "^7.0",
+    "illuminate/database": "^12.17"
+  },
+  "autoload": {
+    "psr-4": {
+      "Moroz1999\\ZxOffline\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "moroz1999"
+    }
+  ]
+}
