@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Runner;
 
+use App\Sync\ProductSyncService;
 use Illuminate\Database\Capsule\Manager as DB;
 
 class TaskRunner
@@ -32,7 +33,7 @@ class TaskRunner
 
     protected function runSyncProds(object $task): void
     {
-        $syncService = new \App\Sync\ProductSyncService();
+        $syncService = new ProductSyncService();
         $syncService->sync();
     }
 }

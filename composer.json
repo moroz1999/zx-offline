@@ -10,7 +10,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Moroz1999\\ZxOffline\\": "src/"
+      "App\\": "src/"
     }
   },
   "authors": [

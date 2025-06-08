@@ -4,26 +4,28 @@ declare(strict_types=1);
 
 namespace App\DB;
 
-use App\DB\Migrations\TasksTableMigration;
-use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Database\Capsule\Manager;
+use Illuminate\Database\Connection;
 
-class DatabaseServiceProvider
+readonly class DatabaseServiceProvider
 {
     public function __construct(
-        private readonly Capsule             $capsule,
-        private readonly TasksTableMigration $migration,
-        private readonly string              $databasePath
+        private string $databasePath
     )
     {
-        $this->capsule->addConnection([
+    }
+
+    public function get(): Connection
+    {
+        $capsule = new Manager();
+
+        $capsule->addConnection([
             'driver' => 'sqlite',
             'database' => $this->databasePath,
             'prefix' => '',
         ]);
 
-        $this->capsule->setAsGlobal();
-        $this->capsule->bootEloquent();
-
-        $this->migration->up();
+        $capsule->bootEloquent();
+        return $capsule->getConnection();
     }
 }

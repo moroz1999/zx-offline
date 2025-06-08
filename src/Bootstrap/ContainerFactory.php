@@ -6,7 +6,7 @@ namespace App\Bootstrap;
 use DI\ContainerBuilder;
 use Psr\Container\ContainerInterface;
 
-class ContainerFactory
+final readonly class ContainerFactory
 {
     public static function create(): ContainerInterface
     {

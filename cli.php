@@ -3,18 +3,16 @@
 
 require __DIR__ . '/vendor/autoload.php';
 
-$container = ContainerFactory::create();
-
-$container->get(DatabaseServiceProvider::class);
-
-use App\DB\DatabaseServiceProvider;
+use App\Bootstrap\ContainerFactory;
 use App\Commands\RunTaskCommand;
-use App\Commands\RunWorkerCommand;
+use App\Commands\RunDaemonCommand;
 use Symfony\Component\Console\Application;
+
+$container = ContainerFactory::create();
 
 $app = new Application('Archive CLI');
 
-$app->add($container->get(RunWorkerCommand::class));
+$app->add($container->get(RunDaemonCommand::class));
 $app->add($container->get(RunTaskCommand::class));
 
 $app->run();
