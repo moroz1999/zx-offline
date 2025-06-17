@@ -31,7 +31,7 @@ readonly class DatabaseServiceProvider
             new ExistingConnection($connection)
         );
 
-        $runner = new DatabaseSchemaChecker($dependencyFactory);
+        $runner = new SchemaChecker($dependencyFactory);
         $runner->createIfNeeded($connection);
 
         return $connection;
