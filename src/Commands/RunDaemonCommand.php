@@ -20,8 +20,8 @@ class RunDaemonCommand extends Command
 
     protected function configure()
     {
-        $this->setName('run:daemon');
-        $this->setDescription('Runs daemon')
+        $this->setName('run');
+        $this->setDescription('Start synchronization with ZX-Art')
             ->addOption('forever', null, InputOption::VALUE_NONE, 'Endless loop');
     }
 

@@ -6,7 +6,8 @@
     "guzzlehttp/guzzle": "^7.9",
     "symfony/console": "^7.3",
     "php-di/php-di": "^7.0",
-    "illuminate/database": "^12.17"
+    "doctrine/dbal": "^4.2",
+    "doctrine/migrations": "^3.9"
   },
   "autoload": {
     "psr-4": {

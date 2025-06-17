@@ -3,25 +3,34 @@ declare(strict_types=1);
 
 namespace App\Tasks;
 
-use Illuminate\Database\Connection;
+use Doctrine\DBAL\Connection;
 
-final readonly class TasksService
+readonly class TasksService
 {
     public function __construct(
-        private Connection $db,
+        private Connection $db
     )
     {
-
     }
 
-    public function getTask(): Task
+    public function getTask(): ?array
     {
-        $task = $this->db->table('tasks')->where('status', 'todo')->orderBy('created_at')->first();
-        return $task;
+        return $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('tasks')
+            ->where('status = :status')
+            ->setParameter('status', 'todo')
+            ->orderBy('created_at', 'ASC')
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchAssociative() ?: null;
     }
 
-    public function lockTask(Task $task): void
+    public function lockTask(array $task): void
     {
-        $this->db->table('tasks')->where('id', $task->id)->update(['status' => 'in_progress']);
+        $this->db->update('tasks', [
+            'status' => 'in_progress',
+            'updated_at' => date('c'),
+        ], ['id' => $task['id']]);
     }
 }

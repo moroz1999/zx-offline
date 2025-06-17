@@ -8,7 +8,6 @@ use App\Sync\ProductSyncService;
 use App\Commands\RunDaemonCommand;
 use App\Commands\RunTaskCommand;
 use App\Tasks\TasksService;
-use Illuminate\Database\Connection;
 use function DI\factory;
 use function DI\autowire;
 use function DI\create;
@@ -25,7 +24,8 @@ return [
     TasksService::class => autowire(),
     TaskRunner::class => autowire(),
     ProductSyncService::class => autowire(),
-    Connection::class => static fn(DatabaseServiceProvider $databaseServiceProvider) => $databaseServiceProvider->get(),
+    Doctrine\DBAL\Connection::class => DI\factory(function (DatabaseServiceProvider $db) {
+        return $db->get();
+    }),
     DatabaseServiceProvider::class => create()->constructor(get('databasePath')),
-    Schema::class => factory([Schema::class, 'init']),
 ];

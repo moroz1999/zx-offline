@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\DB;
 
-use Illuminate\Database\Capsule\Manager;
-use Illuminate\Database\Connection;
+
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\DriverManager;
+use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
+use Doctrine\Migrations\Configuration\Migration\PhpFile;
+use Doctrine\Migrations\DependencyFactory;
 
 readonly class DatabaseServiceProvider
 {
@@ -17,15 +21,20 @@ readonly class DatabaseServiceProvider
 
     public function get(): Connection
     {
-        $capsule = new Manager();
-
-        $capsule->addConnection([
-            'driver' => 'sqlite',
-            'database' => $this->databasePath,
-            'prefix' => '',
+        $conn = DriverManager::getConnection([
+            'driver' => 'pdo_sqlite',
+            'path' => $this->databasePath,
         ]);
 
-        $capsule->bootEloquent();
-        return $capsule->getConnection();
+        $dependencyFactory = DependencyFactory::fromConnection(
+            new PhpFile(__DIR__ . '/../config/migrations.php'),
+            new ExistingConnection($conn)
+        );
+
+        $runner = new MigrationRunner($dependencyFactory);
+        $runner->migrateIfNeeded();
+
+        return $conn;
     }
+
 }

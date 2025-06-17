@@ -4,36 +4,47 @@ declare(strict_types=1);
 namespace App\Runner;
 
 use App\Sync\ProductSyncService;
-use Illuminate\Database\Capsule\Manager as DB;
+use Doctrine\DBAL\Connection;
+use RuntimeException;
 
-class TaskRunner
+readonly class TaskRunner
 {
+    public function __construct(
+        private Connection $db,
+        private ProductSyncService $syncService,
+    ) {}
+
     public function run(string $taskId): void
     {
-        $task = DB::table('tasks')->where('id', $taskId)->first();
+        $task = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from('tasks')
+            ->where('id = :id')
+            ->setParameter('id', $taskId)
+            ->executeQuery()
+            ->fetchAssociative();
 
         if (!$task) {
-            throw new \RuntimeException("Task {$taskId} not found.");
+            throw new RuntimeException("Task {$taskId} not found.");
         }
 
-        switch ($task->type) {
+        switch ($task['type']) {
             case 'sync_prods':
                 $this->runSyncProds($task);
                 break;
 
             default:
-                throw new \RuntimeException("Unknown task type: {$task->type}");
+                throw new RuntimeException("Unknown task type: {$task['type']}");
         }
 
-        DB::table('tasks')->where('id', $taskId)->update([
+        $this->db->update('tasks', [
             'status' => 'done',
             'updated_at' => date('c'),
-        ]);
+        ], ['id' => $taskId]);
     }
 
-    protected function runSyncProds(object $task): void
+    private function runSyncProds(array $task): void
     {
-        $syncService = new ProductSyncService();
-        $syncService->sync();
+        $this->syncService->sync();
     }
 }
