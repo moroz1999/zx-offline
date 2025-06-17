@@ -54,7 +54,7 @@ readonly class TasksRepository
     /**
      * @throws TaskException
      */
-    public function getTaskById(string $taskId): ?TaskRecord
+    public function getTaskById(string $taskId): TaskRecord
     {
         try {
             $row = $this->db->createQueryBuilder()
@@ -64,11 +64,10 @@ readonly class TasksRepository
                 ->setParameter('id', $taskId)
                 ->executeQuery()
                 ->fetchAssociative();
-            return $row ? TaskRecord::fromArray($row) : null;
+            return TaskRecord::fromArray($row);
         } catch (Throwable $e) {
             throw new TaskException("Error getting task $taskId: {$e->getMessage()}");
         }
-
     }
 
     public function updateTask(string $taskId, TaskStatuses $status): void

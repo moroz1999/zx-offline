@@ -31,8 +31,8 @@ readonly class DatabaseServiceProvider
             new ExistingConnection($connection)
         );
 
-        $runner = new MigrationRunner($dependencyFactory);
-        $runner->migrateIfNeeded($connection);
+        $runner = new DatabaseSchemaChecker($dependencyFactory);
+        $runner->createIfNeeded($connection);
 
         return $connection;
     }

@@ -5,22 +5,30 @@ namespace App\DB;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 
-readonly class MigrationRunner
+readonly class DatabaseSchemaChecker
 {
-    public function __construct(
-    )
+    public function __construct()
     {
+    }
+
+    public function createIfNeeded(Connection $connection): void
+    {
+        try {
+            $sm = $connection->createSchemaManager();
+            $this->checkTasksTable($sm, $connection);
+        } catch (Exception $e) {
+            throw new SchemaException("Error creating database schema: {$e->getMessage()}");
+        }
     }
 
     /**
      * @throws Exception
      */
-    public function migrateIfNeeded(Connection $connection): void
+    public function checkTasksTable(AbstractSchemaManager $sm, Connection $connection): void
     {
-        $sm = $connection->createSchemaManager();
-
         if (!$sm->tablesExist(['tasks'])) {
             $schema = new Schema();
             $tasks = $schema->createTable('tasks');

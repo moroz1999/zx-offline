@@ -6,7 +6,7 @@ namespace App\Runner;
 
 use Exception;
 
-final class TaskNotFoundException extends Exception
+final class TaskUnknownTypeException extends Exception
 {
 
 }
