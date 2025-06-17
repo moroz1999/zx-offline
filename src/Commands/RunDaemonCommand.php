@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Commands;
 
-use App\Tasks\TasksService;
+use App\Tasks\TasksRepository;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -12,7 +12,7 @@ use Symfony\Component\Console\Output\OutputInterface;
 class RunDaemonCommand extends Command
 {
     public function __construct(
-        private readonly TasksService $tasksService,
+        private readonly TasksRepository $tasksService,
     )
     {
         parent::__construct();
@@ -20,28 +20,21 @@ class RunDaemonCommand extends Command
 
     protected function configure()
     {
-        $this->setName('run');
-        $this->setDescription('Start synchronization with ZX-Art')
-            ->addOption('forever', null, InputOption::VALUE_NONE, 'Endless loop');
+        $this->setName('run:daemon');
+        $this->setDescription('Runs daemon to execute pending tasks');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $forever = $input->getOption('forever');
-
         do {
-            $task = $this->tasksService->getTask();
+            $task = $this->tasksService->getNextTask();
 
             if ($task) {
                 $this->tasksService->lockTask($task);
                 $output->writeln("Executing task {$task->id}");
                 passthru("php cli.php run:task {$task->id}");
-            } else {
-                if ($forever) {
-                    sleep(5);
-                }
             }
-        } while ($forever || $task);
+        } while ($task);
 
         return Command::SUCCESS;
     }

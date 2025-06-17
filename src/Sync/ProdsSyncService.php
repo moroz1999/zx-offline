@@ -3,11 +3,10 @@ declare(strict_types=1);
 
 namespace App\Sync;
 
-class ProductSyncService
+class ProdsSyncService
 {
     public function sync(): void
     {
-        echo "ProductSyncService::sync() executed\n";
+        echo "ProdsSyncService::sync() executed\n";
     }
 }
-

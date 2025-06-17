@@ -21,20 +21,20 @@ readonly class DatabaseServiceProvider
 
     public function get(): Connection
     {
-        $conn = DriverManager::getConnection([
+        $connection = DriverManager::getConnection([
             'driver' => 'pdo_sqlite',
             'path' => $this->databasePath,
         ]);
 
         $dependencyFactory = DependencyFactory::fromConnection(
             new PhpFile(__DIR__ . '/../config/migrations.php'),
-            new ExistingConnection($conn)
+            new ExistingConnection($connection)
         );
 
         $runner = new MigrationRunner($dependencyFactory);
-        $runner->migrateIfNeeded();
+        $runner->migrateIfNeeded($connection);
 
-        return $conn;
+        return $connection;
     }
 
 }

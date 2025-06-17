@@ -3,48 +3,43 @@ declare(strict_types=1);
 
 namespace App\DB;
 
-use Doctrine\Migrations\DependencyFactory;
-use Doctrine\Migrations\MigratorConfiguration;
-use Doctrine\Migrations\Version\Version;
-use App\DB\Migrations\Version1;
+use Doctrine\DBAL\Connection;
+use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Schema\Schema;
 
 readonly class MigrationRunner
 {
     public function __construct(
-        private DependencyFactory $factory
     )
     {
     }
 
-    public function migrateIfNeeded(): void
+    /**
+     * @throws Exception
+     */
+    public function migrateIfNeeded(Connection $connection): void
     {
-        $migratorConfiguration = $this->factory->getConfiguration();
-//        $plan = $this->factory
-//            ->getMigrationPlanCalculator()
-//            ->getPlanForVersions([], 'up');
-//
-//        if ($plan->getItems()) {
-        // 4. Получение мигатора и планировщика
-        $migrator = $this->factory->getMigrator();
+        $sm = $connection->createSchemaManager();
 
-        $planCalculator = $this->factory->getMigrationPlanCalculator();
-        $versions = [Version1::class];
+        if (!$sm->tablesExist(['tasks'])) {
+            $schema = new Schema();
+            $tasks = $schema->createTable('tasks');
 
-        $migrationsPlan = $planCalculator->getPlanForVersions(
-            array_map(static fn(string $version): Version => new Version($version), $versions),
-            'up'
-        );
+            $tasks->addColumn('id', 'string')->setNotnull(true);
+            $tasks->addColumn('type', 'string');
+            $tasks->addColumn('target_id', 'string', ['notnull' => false]);
+            $tasks->addColumn('status', 'string', ['default' => 'todo']);
+            $tasks->addColumn('attempts', 'integer', ['default' => 0]);
+            $tasks->addColumn('last_error', 'text', ['notnull' => false]);
+            $tasks->addColumn('created_at', 'datetime');
+            $tasks->addColumn('updated_at', 'datetime');
 
-        $migratorConfiguration = (new MigratorConfiguration())
-            ->setDryRun(false) // Отключаем пробный запуск
-            ->setAllOrNothing(true); // Транзакционная миграция
+            $platform = $connection->getDatabasePlatform();
+            $queries = $schema->toSql($platform);
 
-        try {
-            $migrator->migrate($migrationsPlan, $migratorConfiguration);
-            echo "Миграции успешно выполнены!\n";
-        } catch (\Exception $e) {
-            echo "Ошибка при выполнении миграций: " . $e->getMessage() . "\n";
+            foreach ($queries as $sql) {
+                $connection->executeStatement($sql);
+            }
         }
-//        }
     }
 }
