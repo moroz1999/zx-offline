@@ -17,7 +17,7 @@ final readonly class ProdsSyncService
         private ZxArtApiProdsRequester $prodsApi,
         private ZxProdsRepository      $prodsRepo,
         private TasksRepository        $tasks,
-        private LoggerInterface        $logger,
+        private LoggerInterface $logger,
     )
     {
     }

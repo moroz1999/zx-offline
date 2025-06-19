@@ -18,6 +18,7 @@ readonly class TaskRunner
         private ProdsSyncService    $prodsSyncService,
         private ReleasesSyncService $releasesSyncService,
         private TasksRepository     $tasksService,
+        private LoggerInterface $loggerHolder,
     )
     {
     }
@@ -26,15 +27,15 @@ readonly class TaskRunner
      * @throws TaskUnknownTypeException
      * @throws TaskRunningException
      */
-    public function run(string $taskId, LoggerInterface $logger): TaskRecord
+    public function run(string $taskId): TaskRecord
     {
         try {
             $task = $this->tasksService->getTaskById($taskId);
 
             $this->tasksService->updateTask($task->id, TaskStatuses::in_progress);
             match ($task->type) {
-                'sync_prods' => $this->runSyncProds($logger),
-                'sync_releases' => $this->runSyncReleases($logger),
+                'sync_prods' => $this->runSyncProds(),
+                'sync_releases' => $this->runSyncReleases(),
                 default => throw new TaskUnknownTypeException("Unknown task type: $task->type"),
             };
             $this->tasksService->updateTask($taskId, TaskStatuses::done);
@@ -47,7 +48,7 @@ readonly class TaskRunner
     /**
      * @throws TaskRunningException
      */
-    private function runSyncProds(LoggerInterface $logger): void
+    private function runSyncProds(): void
     {
         try {
             $this->prodsSyncService->sync();
@@ -55,10 +56,10 @@ readonly class TaskRunner
         } catch (TaskException $e) {
             throw new TaskRunningException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
         }
-        $logger->notice("Task " . TaskTypes::sync_releases->name . " added.");
+        $this->loggerHolder->notice("Task " . TaskTypes::sync_releases->name . " added.");
     }
 
-    private function runSyncReleases(LoggerInterface $logger): void
+    private function runSyncReleases(): void
     {
         $this->releasesSyncService->sync();
     }

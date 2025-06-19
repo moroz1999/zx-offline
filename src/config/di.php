@@ -1,27 +1,20 @@
 <?php
 
 
-use App\DB\DatabaseServiceProvider;
-use App\Runner\TaskRunner;
-use App\Sync\ProdsSyncService;
 use App\Commands\RunDaemonCommand;
 use App\Commands\RunTaskCommand;
+use App\DB\DatabaseServiceProvider;
+use App\Logging\LoggerHolder;
+use App\Runner\TaskRunner;
 use App\Tasks\TasksRepository;
+use Psr\Log\LoggerInterface;
 use function DI\autowire;
 use function DI\create;
 use function DI\get;
 
 return [
+    LoggerInterface::class => get(LoggerHolder::class),
     'databasePath' => static fn() => __DIR__ . '/../../storage/database.sqlite',
-    RunDaemonCommand::class => create()->constructor(
-        get(TasksRepository::class)
-    ),
-    RunTaskCommand::class => create()->constructor(
-        get(TaskRunner::class)
-    ),
-    TasksRepository::class => autowire(),
-    TaskRunner::class => autowire(),
-    ProdsSyncService::class => autowire(),
     Doctrine\DBAL\Connection::class => DI\factory(function (DatabaseServiceProvider $db) {
         return $db->get();
     }),

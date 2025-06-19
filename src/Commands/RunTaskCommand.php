@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Commands;
 
 use App\Logging\IoLogger;
+use App\Logging\LoggerHolder;
 use App\Runner\TaskRunner;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -15,7 +16,8 @@ use Throwable;
 final class RunTaskCommand extends Command
 {
     public function __construct(
-        private readonly TaskRunner $runner
+        private readonly TaskRunner   $runner,
+        private readonly LoggerHolder $loggerHolder,
     )
     {
         parent::__construct();
@@ -33,9 +35,10 @@ final class RunTaskCommand extends Command
         $id = $input->getArgument('id');
         $io = new SymfonyStyle($input, $output);
         $logger = new IoLogger($io);
+        $this->loggerHolder->setIoLogger($logger);
 
         try {
-            $task = $this->runner->run($id, $logger);
+            $task = $this->runner->run($id);
             $output->writeln("Task $task->type" . ($task->targetId ? ", $task->targetId" : "") . " ($task->id) executed successfully.");
             return Command::SUCCESS;
         } catch (Throwable $e) {

@@ -8,7 +8,9 @@ use Symfony\Component\Console\Style\SymfonyStyle;
 
 class IoLogger extends AbstractLogger
 {
-    public function __construct(private readonly SymfonyStyle $io)
+    public function __construct(
+        private readonly SymfonyStyle $io
+    )
     {
     }
 
