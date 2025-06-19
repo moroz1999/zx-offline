@@ -41,7 +41,6 @@ readonly class SchemaChecker
             $tasks->addColumn('attempts', 'integer', ['default' => 0]);
             $tasks->addColumn('last_error', 'text', ['notnull' => false]);
             $tasks->addColumn('created_at', 'datetime');
-            $tasks->addColumn('updated_at', 'datetime');
 
             $platform = $connection->getDatabasePlatform();
             $queries = $schema->toSql($platform);
@@ -71,8 +70,6 @@ readonly class SchemaChecker
 
             $prods->addColumn('category_id', 'integer', ['notnull' => false]);
             $prods->addColumn('category_title', 'string', ['notnull' => false]);
-
-            $prods->addColumn('updated_at', 'datetime');
 
             $platform = $connection->getDatabasePlatform();
             foreach ($schema->toSql($platform) as $sql) {

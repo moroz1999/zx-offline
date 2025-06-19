@@ -44,7 +44,6 @@ readonly class TasksRepository
         try {
             $this->db->update('tasks', [
                 'status' => TaskStatuses::in_progress->name,
-                'updated_at' => date('c'),
             ], ['id' => $task->id]);
         } catch (Throwable $e) {
             throw new TaskException("Error locking task: {$e->getMessage()}");
@@ -75,7 +74,6 @@ readonly class TasksRepository
         try {
             $this->db->update('tasks', [
                 'status' => $status->name,
-                'updated_at' => date('c'),
             ], ['id' => $taskId]);
         } catch (Throwable $e) {
             throw new TaskException("Error updating task $taskId: {$e->getMessage()}");
@@ -93,7 +91,6 @@ readonly class TasksRepository
                 'type' => $type->name,
                 'status' => TaskStatuses::todo->name,
                 'created_at' => date('c'),
-                'updated_at' => date('c'),
                 'target_id' => $targetId,
             ]);
         } catch (Throwable $e) {
