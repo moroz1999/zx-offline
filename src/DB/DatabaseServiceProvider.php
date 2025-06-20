@@ -7,9 +7,6 @@ namespace App\DB;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\DriverManager;
-use Doctrine\Migrations\Configuration\Connection\ExistingConnection;
-use Doctrine\Migrations\Configuration\Migration\PhpFile;
-use Doctrine\Migrations\DependencyFactory;
 
 readonly class DatabaseServiceProvider
 {
@@ -26,13 +23,8 @@ readonly class DatabaseServiceProvider
             'path' => $this->databasePath,
         ]);
 
-        $dependencyFactory = DependencyFactory::fromConnection(
-            new PhpFile(__DIR__ . '/../config/migrations.php'),
-            new ExistingConnection($connection)
-        );
-
-        $runner = new SchemaChecker($dependencyFactory);
-        $runner->createIfNeeded($connection);
+        $runner = new SchemaService($connection);
+        $runner->createIfNeeded();
 
         return $connection;
     }

@@ -10,7 +10,6 @@ use App\Tasks\TaskRecord;
 use App\Tasks\TasksRepository;
 use App\Tasks\TaskStatuses;
 use App\Tasks\TaskTypes;
-use Psr\Log\LoggerInterface;
 
 readonly class TaskRunner
 {
@@ -18,7 +17,6 @@ readonly class TaskRunner
         private ProdsSyncService    $prodsSyncService,
         private ReleasesSyncService $releasesSyncService,
         private TasksRepository     $tasksService,
-        private LoggerInterface $loggerHolder,
     )
     {
     }
@@ -56,7 +54,6 @@ readonly class TaskRunner
         } catch (TaskException $e) {
             throw new TaskRunningException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
         }
-        $this->loggerHolder->notice("Task " . TaskTypes::sync_releases->name . " added.");
     }
 
     private function runSyncReleases(): void

@@ -4,12 +4,14 @@ declare(strict_types=1);
 namespace App\Tasks;
 
 use Doctrine\DBAL\Connection;
+use Psr\Log\LoggerInterface;
 use Throwable;
 
 readonly class TasksRepository
 {
     public function __construct(
-        private Connection $db
+        private Connection      $db,
+        private LoggerInterface $logger,
     )
     {
     }
@@ -93,6 +95,8 @@ readonly class TasksRepository
                 'created_at' => date('c'),
                 'target_id' => $targetId,
             ]);
+            $this->logger->notice("Task $type->name $targetId added.");
+
         } catch (Throwable $e) {
             throw new TaskException("Error creating task: {$e->getMessage()}");
         }

@@ -39,10 +39,10 @@ final class RunTaskCommand extends Command
 
         try {
             $task = $this->runner->run($id);
-            $output->writeln("Task $task->type" . ($task->targetId ? ", $task->targetId" : "") . " ($task->id) executed successfully.");
+            $output->writeln("$task->id $task->type" . ($task->targetId ? ", $task->targetId" : "") . " executed successfully.");
             return Command::SUCCESS;
         } catch (Throwable $e) {
-            $output->writeln("<error>Error: {$e->getMessage()}</error>");
+            $output->writeln("<error>Error: {$e->getMessage()} {$e->getTraceAsString()}</error>");
             return Command::FAILURE;
         }
     }

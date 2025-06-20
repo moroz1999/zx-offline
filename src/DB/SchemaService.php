@@ -8,18 +8,48 @@ use Doctrine\DBAL\Exception;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 
-readonly class SchemaChecker
+readonly class SchemaService
 {
-    public function __construct()
+    private AbstractSchemaManager $sm;
+
+    public function __construct(
+        private Connection $connection,
+    )
     {
+        $this->sm = $connection->createSchemaManager();
     }
 
-    public function createIfNeeded(Connection $connection): void
+    public function dropBase(): void
     {
         try {
-            $sm = $connection->createSchemaManager();
-            $this->checkTasksTable($sm, $connection);
-            $this->checkProdsTable($sm, $connection);
+            $this->dropTable(Tables::prods);
+            $this->dropTable(Tables::tasks);
+        } catch (Exception $e) {
+            throw new SchemaException("Error dropping database schema: {$e->getMessage()}");
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private function dropTable(Tables $tableName): void
+    {
+        if ($this->sm->tablesExist([$tableName->name])) {
+            $schema = new Schema();
+            $schema->dropTable($tableName->name);
+            $platform = $this->connection->getDatabasePlatform();
+            $queries = $schema->toSql($platform);
+            foreach ($queries as $query) {
+                $this->connection->executeStatement($query);
+            }
+        }
+    }
+
+    public function createIfNeeded(): void
+    {
+        try {
+            $this->checkTasksTable();
+            $this->checkProdsTable();
         } catch (Exception $e) {
             throw new SchemaException("Error creating database schema: {$e->getMessage()}");
         }
@@ -28,9 +58,9 @@ readonly class SchemaChecker
     /**
      * @throws Exception
      */
-    public function checkTasksTable(AbstractSchemaManager $sm, Connection $connection): void
+    public function checkTasksTable(): void
     {
-        if (!$sm->tablesExist(['tasks'])) {
+        if (!$this->sm->tablesExist(['tasks'])) {
             $schema = new Schema();
             $tasks = $schema->createTable('tasks');
 
@@ -42,11 +72,11 @@ readonly class SchemaChecker
             $tasks->addColumn('last_error', 'text', ['notnull' => false]);
             $tasks->addColumn('created_at', 'datetime');
 
-            $platform = $connection->getDatabasePlatform();
+            $platform = $this->connection->getDatabasePlatform();
             $queries = $schema->toSql($platform);
 
             foreach ($queries as $sql) {
-                $connection->executeStatement($sql);
+                $this->connection->executeStatement($sql);
             }
         }
     }
@@ -55,9 +85,9 @@ readonly class SchemaChecker
     /**
      * @throws Exception
      */
-    private function checkProdsTable(AbstractSchemaManager $sm, Connection $connection): void
+    private function checkProdsTable(): void
     {
-        if (!$sm->tablesExist(['prods'])) {
+        if (!$this->sm->tablesExist(['prods'])) {
             $schema = new Schema();
             $prods = $schema->createTable('prods');
 
@@ -71,9 +101,9 @@ readonly class SchemaChecker
             $prods->addColumn('category_id', 'integer', ['notnull' => false]);
             $prods->addColumn('category_title', 'string', ['notnull' => false]);
 
-            $platform = $connection->getDatabasePlatform();
+            $platform = $this->connection->getDatabasePlatform();
             foreach ($schema->toSql($platform) as $sql) {
-                $connection->executeStatement($sql);
+                $this->connection->executeStatement($sql);
             }
         }
     }
