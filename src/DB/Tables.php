@@ -5,5 +5,7 @@ namespace App\DB;
 enum Tables
 {
     case tasks;
-    case prods;
+    case zx_prods;
+    case zx_releases;
+    case files;
 }

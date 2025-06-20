@@ -32,7 +32,7 @@ class RunDaemonCommand extends Command
             if ($task) {
                 $this->tasksService->lockTask($task);
                 $output->writeln("{$task->id} $task->type" . ($task->targetId ? " $task->targetId" : "") . " executed from cli");
-                passthru("php cli.php run:task {$task->id}");
+                passthru("php cli.php run:task {$task->id} --ansi");
             }
         } while ($task);
 

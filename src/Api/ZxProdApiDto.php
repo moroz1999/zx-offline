@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Api;
 
-final readonly class ZxProdDto
+final readonly class ZxProdApiDto
 {
     /**
      * @param ZxCategoryDto[] $categories

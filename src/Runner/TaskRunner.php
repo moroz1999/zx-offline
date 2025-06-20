@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace App\Runner;
 
-use App\Sync\ProdsSyncService;
-use App\Sync\ReleasesSyncService;
+use App\Sync\ZxProdsSyncService;
+use App\Sync\ZxReleasesSyncService;
 use App\Tasks\TaskException;
 use App\Tasks\TaskRecord;
 use App\Tasks\TasksRepository;
@@ -14,9 +14,9 @@ use App\Tasks\TaskTypes;
 readonly class TaskRunner
 {
     public function __construct(
-        private ProdsSyncService    $prodsSyncService,
-        private ReleasesSyncService $releasesSyncService,
-        private TasksRepository     $tasksService,
+        private ZxProdsSyncService    $prodsSyncService,
+        private ZxReleasesSyncService $releasesSyncService,
+        private TasksRepository       $tasksService,
     )
     {
     }
@@ -32,8 +32,9 @@ readonly class TaskRunner
 
             $this->tasksService->updateTask($task->id, TaskStatuses::in_progress);
             match ($task->type) {
-                'sync_prods' => $this->runSyncProds(),
-                'sync_releases' => $this->runSyncReleases(),
+                TaskTypes::sync_prods->name => $this->runSyncProds(),
+                TaskTypes::sync_releases->name => $this->runSyncReleases(),
+                TaskTypes::check_prod_releases->name => $this->runCheckProdReleases((int)$task->targetId),
                 default => throw new TaskUnknownTypeException("Unknown task type: $task->type"),
             };
             $this->tasksService->updateTask($taskId, TaskStatuses::done);
@@ -55,6 +56,19 @@ readonly class TaskRunner
             throw new TaskRunningException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
         }
     }
+
+    /**
+     * @throws TaskRunningException
+     */
+    private function runCheckProdReleases(int $zxProdId): void
+    {
+        try {
+            $this->releasesSyncService->syncByProdId($zxProdId);;
+        } catch (TaskException $e) {
+            throw new TaskRunningException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
+        }
+    }
+
 
     private function runSyncReleases(): void
     {

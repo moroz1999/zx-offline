@@ -20,7 +20,7 @@ final readonly class ZxArtApiProdsRequester
     }
 
     /**
-     * @return Generator<ZxProdDto>
+     * @return Generator<ZxProdApiDto>
      * @throws ZxArtApiException
      */
     public function getAll(): Generator
@@ -56,7 +56,7 @@ final readonly class ZxArtApiProdsRequester
                     );
                 }
 
-                yield new ZxProdDto(
+                yield new ZxProdApiDto(
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
