@@ -5,45 +5,40 @@ namespace App\DB;
 
 use Doctrine\DBAL\Connection;
 use Doctrine\DBAL\Exception;
+use Doctrine\DBAL\Platforms\AbstractPlatform;
 use Doctrine\DBAL\Schema\AbstractSchemaManager;
 use Doctrine\DBAL\Schema\Schema;
 
 readonly class SchemaService
 {
     private AbstractSchemaManager $sm;
+    private AbstractPlatform $platform;
 
     public function __construct(
         private Connection $connection,
-    )
-    {
+    ) {
         $this->sm = $connection->createSchemaManager();
+        $this->platform = $connection->getDatabasePlatform();
     }
 
     public function dropBase(): void
     {
         try {
+            $this->dropTable(Tables::files);
+            $this->dropTable(Tables::zx_releases);
             $this->dropTable(Tables::zx_prods);
             $this->dropTable(Tables::tasks);
-            $this->dropTable(Tables::zx_releases);
-            $this->dropTable(Tables::files);
         } catch (Exception $e) {
             throw new SchemaException("Error dropping database schema: {$e->getMessage()}");
         }
     }
 
-    /**
-     * @throws Exception
-     */
     private function dropTable(Tables $tableName): void
     {
         if ($this->sm->tablesExist([$tableName->name])) {
             $schema = new Schema();
             $schema->dropTable($tableName->name);
-            $platform = $this->connection->getDatabasePlatform();
-            $queries = $schema->toSql($platform);
-            foreach ($queries as $query) {
-                $this->connection->executeStatement($query);
-            }
+            $this->executeSchema($schema);
         }
     }
 
@@ -53,15 +48,13 @@ readonly class SchemaService
             $this->checkTasksTable();
             $this->checkProdsTable();
             $this->checkReleasesTable();
+            $this->checkFilesTable();
         } catch (Exception $e) {
             throw new SchemaException("Error creating database schema: {$e->getMessage()}");
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    public function checkTasksTable(): void
+    private function checkTasksTable(): void
     {
         if (!$this->sm->tablesExist([Tables::tasks->name])) {
             $schema = new Schema();
@@ -75,19 +68,10 @@ readonly class SchemaService
             $tasks->addColumn('last_error', 'text', ['notnull' => false]);
             $tasks->addColumn('created_at', 'datetime');
 
-            $platform = $this->connection->getDatabasePlatform();
-            $queries = $schema->toSql($platform);
-
-            foreach ($queries as $sql) {
-                $this->connection->executeStatement($sql);
-            }
+            $this->executeSchema($schema);
         }
     }
 
-
-    /**
-     * @throws Exception
-     */
     private function checkProdsTable(): void
     {
         if (!$this->sm->tablesExist([Tables::zx_prods->name])) {
@@ -104,32 +88,49 @@ readonly class SchemaService
             $prods->addColumn('category_id', 'integer', ['notnull' => false]);
             $prods->addColumn('category_title', 'string', ['notnull' => false]);
 
-            $platform = $this->connection->getDatabasePlatform();
-            foreach ($schema->toSql($platform) as $sql) {
-                $this->connection->executeStatement($sql);
-            }
+            $this->executeSchema($schema);
         }
     }
 
-    /**
-     * @throws Exception
-     */
     private function checkReleasesTable(): void
     {
         if (!$this->sm->tablesExist([Tables::zx_releases->name])) {
             $schema = new Schema();
-            $prods = $schema->createTable(Tables::zx_releases->name);
+            $releases = $schema->createTable(Tables::zx_releases->name);
 
-            $prods->addColumn('id', 'integer')->setNotnull(true);
-            $prods->setPrimaryKey(['id']);
+            $releases->addColumn('id', 'integer')->setNotnull(true);
+            $releases->setPrimaryKey(['id']);
 
-            $prods->addColumn('title', 'string');
-            $prods->addColumn('date_modified', 'integer');
+            $releases->addColumn('title', 'string');
+            $releases->addColumn('date_modified', 'integer');
 
-            $platform = $this->connection->getDatabasePlatform();
-            foreach ($schema->toSql($platform) as $sql) {
-                $this->connection->executeStatement($sql);
-            }
+            $this->executeSchema($schema);
+        }
+    }
+
+    private function checkFilesTable(): void
+    {
+        if (!$this->sm->tablesExist([Tables::files->name])) {
+            $schema = new Schema();
+            $files = $schema->createTable(Tables::files->name);
+
+            $files->addColumn('id', 'integer')->setNotnull(true);
+            $files->setPrimaryKey(['id']);
+
+            $files->addColumn('zx_release_id', 'integer')->setNotnull(true);
+            $files->addColumn('md5', 'string');
+            $files->addColumn('type', 'string');
+            $files->addColumn('file_name', 'string');
+
+            $this->executeSchema($schema);
+        }
+    }
+
+    private function executeSchema(Schema $schema): void
+    {
+        $queries = $schema->toSql($this->platform);
+        foreach ($queries as $sql) {
+            $this->connection->executeStatement($sql);
         }
     }
 }

@@ -6,7 +6,7 @@ namespace App\Runner;
 
 use Exception;
 
-final class TaskRunningException extends Exception
+final class TaskRunnerException extends Exception
 {
 
 }

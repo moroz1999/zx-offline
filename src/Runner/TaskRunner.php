@@ -10,12 +10,13 @@ use App\Tasks\TaskRecord;
 use App\Tasks\TasksRepository;
 use App\Tasks\TaskStatuses;
 use App\Tasks\TaskTypes;
+use App\ZxReleases\ZxReleaseException;
 
 readonly class TaskRunner
 {
     public function __construct(
         private ZxProdsSyncService    $prodsSyncService,
-        private ZxReleasesSyncService $releasesSyncService,
+        private ZxReleasesSyncService $zxReleasesSyncService,
         private TasksRepository       $tasksService,
     )
     {
@@ -23,7 +24,7 @@ readonly class TaskRunner
 
     /**
      * @throws TaskUnknownTypeException
-     * @throws TaskRunningException
+     * @throws TaskRunnerException
      */
     public function run(string $taskId): TaskRecord
     {
@@ -40,12 +41,12 @@ readonly class TaskRunner
             $this->tasksService->updateTask($taskId, TaskStatuses::done);
             return $task;
         } catch (TaskException $e) {
-            throw new TaskRunningException("Task running $taskId not found:" . $e->getMessage());
+            throw new TaskRunnerException("Task running $taskId not found:" . $e->getMessage());
         }
     }
 
     /**
-     * @throws TaskRunningException
+     * @throws TaskRunnerException
      */
     private function runSyncProds(): void
     {
@@ -53,25 +54,25 @@ readonly class TaskRunner
             $this->prodsSyncService->sync();
             $this->tasksService->addTask(TaskTypes::sync_releases);
         } catch (TaskException $e) {
-            throw new TaskRunningException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
+            throw new TaskRunnerException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
         }
     }
 
     /**
-     * @throws TaskRunningException
+     * @throws TaskRunnerException
      */
     private function runCheckProdReleases(int $zxProdId): void
     {
         try {
-            $this->releasesSyncService->syncByProdId($zxProdId);;
-        } catch (TaskException $e) {
-            throw new TaskRunningException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
+            $this->zxReleasesSyncService->syncByProdId($zxProdId);
+        } catch (ZxReleaseException $e) {
+            throw new TaskRunnerException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
         }
     }
 
 
     private function runSyncReleases(): void
     {
-        $this->releasesSyncService->sync();
+        $this->zxReleasesSyncService->sync();
     }
 }
