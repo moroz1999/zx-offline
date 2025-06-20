@@ -24,7 +24,7 @@ class IoLogger extends AbstractLogger
             'emergency', 'alert', 'critical', 'error' => $this->io->error($formatted),
             'warning' => $this->io->warning($formatted),
             'notice' => $this->io->success($formatted),
-            'info' => $this->io->note($formatted),
+            'info' => $this->io->writeln($formatted),
             'debug' => $this->io->writeln("<fg=gray>$formatted</>"),
             default => $this->io->writeln($formatted),
         };

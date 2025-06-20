@@ -41,6 +41,12 @@ class ResetCommand extends Command
         } catch (SchemaException $e) {
             $this->loggerHolder->error($e->getMessage());;
         }
+        $io->section('Creating tables');
+        try {
+            $this->schemaService->createIfNeeded();
+        } catch (SchemaException $e) {
+            $this->loggerHolder->error($e->getMessage());;
+        }
 
         return Command::SUCCESS;
     }

@@ -5,7 +5,6 @@ namespace App\Files;
 
 use App\DB\Tables;
 use Doctrine\DBAL\Connection;
-use Doctrine\DBAL\Exception;
 
 final readonly class FilesRepository
 {
@@ -37,13 +36,7 @@ final readonly class FilesRepository
             ->executeQuery()
             ->fetchAssociative();
 
-        return $row ? new FileRecord(
-            id: $row['id'],
-            zxReleaseId: $row['zx_release_id'],
-            md5: $row['md5'],
-            type: $row['type'],
-            fileName: $row['file_name'],
-        ) : null;
+        return $row ? $this->createDtoFromRow($row) : null;
     }
 
     public function create(FileRecord $data): void
@@ -52,7 +45,8 @@ final readonly class FilesRepository
             'id' => $data->id,
             'md5' => $data->md5,
             'type' => $data->type,
-            'file_name' => $data->fileName,
+            'zx_release_id' => $data->zxReleaseId,
+            'file_path' => $data->filePath,
         ]);
     }
 
@@ -61,7 +55,8 @@ final readonly class FilesRepository
         $this->db->update(Tables::files->name, [
             'md5' => $data->md5,
             'type' => $data->type,
-            'file_name' => $data->fileName,
+            'zx_release_id' => $data->zxReleaseId,
+            'file_path' => $data->filePath,
         ], ['id' => $data->id]);
     }
 
@@ -83,12 +78,17 @@ final readonly class FilesRepository
             ->executeQuery()
             ->fetchAllAssociative();
 
-        return array_map(fn($row) => new FileRecord(
+        return array_map(fn($row) => $this->createDtoFromRow($row), $rows);
+    }
+
+    private function createDtoFromRow(array $row): FileRecord
+    {
+        return new FileRecord(
             id: $row['id'],
             zxReleaseId: $row['zx_release_id'],
             md5: $row['md5'],
             type: $row['type'],
-            fileName: $row['file_name'],
-        ), $rows);
+            filePath: $row['file_path'],
+        );
     }
 }

@@ -23,9 +23,6 @@ readonly class DatabaseServiceProvider
             'path' => $this->databasePath,
         ]);
 
-        $runner = new SchemaService($connection);
-        $runner->createIfNeeded();
-
         return $connection;
     }
 

@@ -5,11 +5,8 @@ namespace App\Sync;
 
 use App\Api\ZxArtApiReleasesRequester;
 use App\Api\ZxReleaseApiDto;
-use App\Api\FileApiDto;
 use App\Files\FileRecord;
 use App\Files\FilesRepository;
-use App\Tasks\TasksRepository;
-use App\Tasks\TaskTypes;
 use App\ZxReleases\ZxReleasesRepository;
 use App\ZxReleases\ZxReleaseRecord;
 use Psr\Log\LoggerInterface;
@@ -83,12 +80,12 @@ final readonly class ZxReleasesSyncService
                 zxReleaseId: $releaseId,
                 md5: $fileDto->md5,
                 type: $fileDto->type,
-                fileName: $fileDto->fileName,
+                filePath: 'todo: make it configurable',
             );
 
             if (!isset($existingMap[$newFile->id])) {
                 $this->filesRepository->create($newFile);
-                $this->logger->info("File {$newFile->id} created");
+                $this->logger->info("File $newFile->id $fileDto->fileName $newFile->zxReleaseId created");
                 continue;
             }
 
@@ -97,10 +94,9 @@ final readonly class ZxReleasesSyncService
             if (
                 $newFile->md5 !== $existingFile->md5
                 || $newFile->type !== $existingFile->type
-                || $newFile->fileName !== $existingFile->fileName
             ) {
                 $this->filesRepository->update($newFile);
-                $this->logger->info("File {$newFile->id} updated");
+                $this->logger->info("File $newFile->id $fileDto->fileName $newFile->zxReleaseId updated");
             }
 
             unset($existingMap[$newFile->id]);
