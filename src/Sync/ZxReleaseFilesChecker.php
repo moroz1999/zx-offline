@@ -3,12 +3,11 @@ declare(strict_types=1);
 
 namespace App\Sync;
 
+use App\Archive\FileArchiveService;
 use App\Files\FilesRepository;
 use App\Files\FileRecord;
 use App\ZxReleases\ZxReleasesRepository;
 use App\ZxProds\ZxProdsRepository;
-use App\Api\ZxReleaseApiDto;
-use App\Api\FileApiDto;
 use Psr\Log\LoggerInterface;
 
 final readonly class ZxReleaseFilesChecker
@@ -18,6 +17,7 @@ final readonly class ZxReleaseFilesChecker
         private ZxReleasesRepository $releasesRepository,
         private ZxProdsRepository    $prodsRepository,
         private DownloadService      $downloadService,
+        private FileArchiveService   $fileArchiveService,
         private LoggerInterface      $logger,
     )
     {
@@ -43,38 +43,41 @@ final readonly class ZxReleaseFilesChecker
             $existingMap[$file->id] = $file;
         }
 
-        foreach ($release->files as $fileDto) {
-            $expectedName = $this->generateFileName($prod, $release, $fileDto);
+        foreach ($existingFiles as $fileDto) {
+            $generated = $this->generateFileName($prod, $release, $fileDto);
             $fileId = $fileDto->id;
 
-            if (!isset($existingMap[$fileId])) {
-                // файл отсутствует в БД, нужно скачать
+            $archivePath = $this->fileArchiveService->getArchiveBasePath() . $generated;
+
+            if (!$this->fileArchiveService->fileExists($fileDto)) {
                 $this->logger->info("File $fileId missing, downloading");
-                $this->downloadService->downloadFile($release->id, $fileDto);
+
+                $zxArtUrl = "https://zxart.ee/zxfile/id:$release->id/fileId:$fileId/";
+                $this->downloadService->downloadFile($zxArtUrl, $archivePath, $fileDto->md5);
                 continue;
             }
 
             $existingFile = $existingMap[$fileId];
-            if ($existingFile->fileName !== $expectedName) {
+            if ($existingFile->filePath !== $generated) {
                 $updated = new FileRecord(
                     id: $existingFile->id,
                     zxReleaseId: $existingFile->zxReleaseId,
                     md5: $existingFile->md5,
                     type: $existingFile->type,
-                    filePath: $expectedName
+                    filePath: $generated
                 );
 
-                $this->filesRepository->updateFileName($existingFile, $updated);
-                $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->fileName}' -> '{$expectedName}'");
+                $this->fileArchiveService->renameFile($existingFile, $generated);
+                $this->filesRepository->update($updated);
+
+                $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->fileName}' -> '{$generated}'");
             }
 
             unset($existingMap[$fileId]);
         }
-
-        // Всё. Лишние файлы (оставшиеся в existingMap) не трогаем — их удаляют в другом таске
     }
 
-    private function generateFileName($prod, $release, FileApiDto $fileDto): string
+    private function generateFileName($prod, $release, FileRecord $fileDto): string
     {
         $year = $release->year ?? $prod->year;
         $parts = [$prod->title];

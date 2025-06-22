@@ -5,13 +5,13 @@ namespace App\Sync;
 
 use App\Api\ZxArtApiReleasesRequester;
 use App\Api\ZxReleaseApiDto;
-use App\Files\FileArchiveService;
+use App\Archive\FileArchiveService;
 use App\Files\FileRecord;
 use App\Files\FilesRepository;
 use App\Tasks\TasksRepository;
 use App\Tasks\TaskTypes;
-use App\ZxReleases\ZxReleasesRepository;
 use App\ZxReleases\ZxReleaseRecord;
+use App\ZxReleases\ZxReleasesRepository;
 use Psr\Log\LoggerInterface;
 
 final readonly class ZxReleasesSyncService
@@ -38,13 +38,15 @@ final readonly class ZxReleasesSyncService
 
             if (!$existing) {
                 $this->createRelease($record);
+                $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
                 $this->logger->info("Release $record->id created");
             } elseif ($record->dateModified > $existing->dateModified) {
                 $this->updateRelease($record);
+                $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
                 $this->logger->info("Release $record->id updated");
             }
 
-            $this->syncFiles($record->id, $apiRelease->files);
+            $this->syncFileRecords($record->id, $apiRelease->files);
         }
 
         foreach (array_keys($existingIds) as $obsoleteId) {
@@ -76,12 +78,12 @@ final readonly class ZxReleasesSyncService
         $this->releasesRepository->update($record);
     }
 
-    private function syncFiles(int $releaseId, array $apiFiles): void
+    private function syncFileRecords(int $releaseId, array $apiFiles): void
     {
         $existingFiles = $this->filesRepository->getByReleaseId($releaseId);
         $existingMap = [];
-        foreach ($existingFiles as $f) {
-            $existingMap[$f->id] = $f;
+        foreach ($existingFiles as $file) {
+            $existingMap[$file->id] = $file;
         }
 
         foreach ($apiFiles as $fileDto) {
@@ -90,7 +92,7 @@ final readonly class ZxReleasesSyncService
                 zxReleaseId: $releaseId,
                 md5: $fileDto->md5,
                 type: $fileDto->type,
-                filePath: 'todo: make it configurable',
+                filePath: null,
             );
 
             if (!isset($existingMap[$newFile->id])) {
@@ -142,6 +144,6 @@ final readonly class ZxReleasesSyncService
         $this->fileArchiveService->deleteFile($file);
         $this->filesRepository->delete($fileId);
 
-        $this->logger->info("Release $file->id $file->filePath deleted");
+        $this->logger->info("File $file->id $file->filePath deleted");
     }
 }

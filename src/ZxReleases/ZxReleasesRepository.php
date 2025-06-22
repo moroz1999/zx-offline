@@ -46,15 +46,7 @@ final readonly class ZxReleasesRepository
                 ->executeQuery()
                 ->fetchAssociative();
 
-            return $row ? new ZxReleaseRecord(
-                id: $row['id'],
-                prodId: $row['prod_id'],
-                title: $row['title'],
-                dateModified: $row['date_modified'],
-                year: $row['year'],
-                releaseType: $row['release_type'],
-                version: $row['version'],
-            ) : null;
+            return $row ? $this->mapRowToRecord($row) : null;
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());
         }
@@ -109,5 +101,42 @@ final readonly class ZxReleasesRepository
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());
         }
+    }
+
+    /**
+     * @return ZxReleaseRecord[]
+     * @throws ZxReleaseException
+     */
+    public function getByProdId(int $prodId): array
+    {
+        try {
+            $rows = $this->db->createQueryBuilder()
+                ->select('*')
+                ->from(Tables::zx_releases->name)
+                ->where('prod_id = :prod_id')
+                ->setParameter('prod_id', $prodId)
+                ->executeQuery()
+                ->fetchAllAssociative();
+
+            return array_map(
+                fn(array $row) => $this->mapRowToRecord($row),
+                $rows
+            );
+        } catch (Exception $e) {
+            throw new ZxReleaseException($e->getMessage());
+        }
+    }
+
+    private function mapRowToRecord(array $row): ZxReleaseRecord
+    {
+        return new ZxReleaseRecord(
+            id: $row['id'],
+            prodId: $row['prod_id'],
+            title: $row['title'],
+            dateModified: $row['date_modified'],
+            year: $row['year'],
+            releaseType: $row['release_type'],
+            version: $row['version'],
+        );
     }
 }

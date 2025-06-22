@@ -10,7 +10,7 @@ final readonly class FileRecord
         public int    $zxReleaseId,
         public string $md5,
         public string $type,
-        public string $filePath,
+        public ?string $filePath,
     )
     {
     }

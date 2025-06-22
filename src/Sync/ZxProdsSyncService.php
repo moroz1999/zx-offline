@@ -9,15 +9,19 @@ use App\Tasks\TasksRepository;
 use App\Tasks\TaskTypes;
 use App\ZxProds\ZxProdRecord;
 use App\ZxProds\ZxProdsRepository;
+use App\ZxReleases\ZxReleaseRecord;
+use App\ZxReleases\ZxReleasesRepository;
 use Psr\Log\LoggerInterface;
 
 final readonly class ZxProdsSyncService
 {
     public function __construct(
-        private ZxArtApiProdsRequester $prodsApi,
+        private ZxArtApiProdsRequester $zxArtApiProdsRequester,
         private ZxProdsRepository      $zxProdsRepository,
-        private TasksRepository        $tasks,
+        private TasksRepository        $tasksRepository,
         private LoggerInterface        $logger,
+        private ZxReleasesRepository   $zxReleasesRepository,
+        private ZxReleasesSyncService  $zxReleasesSyncService,
     )
     {
     }
@@ -26,7 +30,7 @@ final readonly class ZxProdsSyncService
     {
         $existingIds = array_flip($this->zxProdsRepository->getAllIds());
 
-        foreach ($this->prodsApi->getAll() as $apiProd) {
+        foreach ($this->zxArtApiProdsRequester->getAll() as $apiProd) {
             $record = $this->mapToRecord($apiProd);
 
             $existing = $this->zxProdsRepository->getById($record->id);
@@ -40,15 +44,24 @@ final readonly class ZxProdsSyncService
 
             if ($record->dateModified > $existing->dateModified) {
                 $this->zxProdsRepository->update($record);
-                $this->tasks->addTask(TaskTypes::check_prod_releases, (string)$record->id);
+                $this->tasksRepository->addTask(TaskTypes::check_prod_releases, (string)$record->id);
                 $this->logger->info("Prod $record->id updated");
             }
         }
 
         foreach (array_keys($existingIds) as $obsoleteId) {
-            $this->zxProdsRepository->delete($obsoleteId);
+            $this->deleteProd($obsoleteId);;
             $this->logger->info("Prod $obsoleteId deleted as removed from API");
         }
+    }
+
+    public function deleteProd(int $id): void
+    {
+        $releases = $this->zxReleasesRepository->getByProdId($id);
+        array_map(fn(ZxReleaseRecord $release) => $this->zxReleasesSyncService->deleteRelease($release->id), $releases);
+
+        $this->zxProdsRepository->delete($id);
+        $this->logger->info("Prod $id deleted");
     }
 
     private function mapToRecord(ZxProdApiDto $dto): ZxProdRecord
