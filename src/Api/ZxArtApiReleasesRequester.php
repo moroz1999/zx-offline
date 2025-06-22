@@ -27,6 +27,8 @@ final readonly class ZxArtApiReleasesRequester
         $start = 0;
         $fetched = 0;
         $total = null;
+        $debugLimit = null;
+        $debugLimit = 10;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
@@ -44,9 +46,9 @@ final readonly class ZxArtApiReleasesRequester
 
             $releases = $data['responseData']['zxRelease'] ?? [];
             $total ??= $data['totalAmount'] ?? null;
-            $total = 10;
 
             foreach ($releases as $item) {
+                $fetched++;
                 $files = [];
                 foreach ($item['playableFiles'] ?? [] as $file) {
                     $files[] = new FileApiDto(
@@ -71,9 +73,12 @@ final readonly class ZxArtApiReleasesRequester
                     prodId: (int)$item['prodId'],
                     files: $files,
                 );
+
+                if ($fetched === $debugLimit) {
+                    return;
+                }
             }
 
-            $fetched += count($releases);
 
             $start += self::PAGE_SIZE;
         } while ($total !== null && $fetched < $total);

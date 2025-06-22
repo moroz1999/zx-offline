@@ -28,6 +28,8 @@ final readonly class ZxArtApiProdsRequester
         $start = 0;
         $fetched = 0;
         $total = null;
+        $debugLimit = null;
+        $debugLimit = 10;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
@@ -45,8 +47,8 @@ final readonly class ZxArtApiProdsRequester
 
             $prods = $data['responseData']['zxProd'] ?? [];
             $total ??= $data['totalAmount'] ?? null;
-            $total = 30;
             foreach ($prods as $item) {
+                $fetched++;
                 $categories = [];
 
                 foreach ($item['categoriesInfo'] ?? [] as $cat) {
@@ -64,9 +66,10 @@ final readonly class ZxArtApiProdsRequester
                     legalStatus: $item['legalStatus'] ?? null,
                     categories: $categories,
                 );
-
+                if ($fetched === $debugLimit) {
+                    return;
+                }
             }
-            $fetched += count($prods);
 
             $start += self::PAGE_SIZE;
         } while ($total !== null && $fetched < $total);
