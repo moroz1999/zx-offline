@@ -12,6 +12,7 @@ final readonly class ZxProdRecord
         public ?string $legalStatus,
         public ?int    $categoryId,
         public ?string $categoryTitle,
+        public ?int    $year,
     )
     {
     }

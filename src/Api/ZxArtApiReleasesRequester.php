@@ -24,12 +24,12 @@ final readonly class ZxArtApiReleasesRequester
      */
     public function getAll(): Generator
     {
-        $page = 1;
+        $start = 0;
         $fetched = 0;
         $total = null;
 
         do {
-            $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/page:' . $page;
+            $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
 
             try {
                 $response = $this->client->get($url);
@@ -44,7 +44,7 @@ final readonly class ZxArtApiReleasesRequester
 
             $releases = $data['responseData']['zxRelease'] ?? [];
             $total ??= $data['totalAmount'] ?? null;
-            $total = 30;
+            $total = 10;
 
             foreach ($releases as $item) {
                 $files = [];
@@ -65,13 +65,17 @@ final readonly class ZxArtApiReleasesRequester
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
+                    year: isset($item['year']) ? (int)$item['year'] : null,
+                    releaseType: (string)$item['releaseType'],
+                    version: (string)($item['version'] ?? ''),
+                    prodId: (int)$item['prodId'],
                     files: $files,
                 );
-
-                $fetched++;
             }
 
-            $page++;
+            $fetched += count($releases);
+
+            $start += self::PAGE_SIZE;
         } while ($total !== null && $fetched < $total);
     }
 }

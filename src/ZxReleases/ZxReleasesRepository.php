@@ -48,8 +48,12 @@ final readonly class ZxReleasesRepository
 
             return $row ? new ZxReleaseRecord(
                 id: $row['id'],
+                prodId: $row['prod_id'],
                 title: $row['title'],
                 dateModified: $row['date_modified'],
+                year: $row['year'],
+                releaseType: $row['release_type'],
+                version: $row['version'],
             ) : null;
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());
@@ -64,8 +68,12 @@ final readonly class ZxReleasesRepository
         try {
             $this->db->insert(Tables::zx_releases->name, [
                 'id' => $data->id,
+                'prod_id' => $data->prodId,
                 'title' => $data->title,
                 'date_modified' => $data->dateModified,
+                'year' => $data->year,
+                'release_type' => $data->releaseType,
+                'version' => $data->version,
             ]);
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());
@@ -79,8 +87,12 @@ final readonly class ZxReleasesRepository
     {
         try {
             $this->db->update(Tables::zx_releases->name, [
+                'prod_id' => $data->prodId,
                 'title' => $data->title,
                 'date_modified' => $data->dateModified,
+                'year' => $data->year,
+                'release_type' => $data->releaseType,
+                'version' => $data->version,
             ], ['id' => $data->id]);
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());

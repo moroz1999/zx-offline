@@ -25,12 +25,12 @@ final readonly class ZxArtApiProdsRequester
      */
     public function getAll(): Generator
     {
-        $page = 1;
+        $start = 0;
         $fetched = 0;
         $total = null;
 
         do {
-            $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/page:' . $page;
+            $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
 
             try {
                 $response = $this->client->get($url);
@@ -60,14 +60,15 @@ final readonly class ZxArtApiProdsRequester
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
+                    year: isset($item['year']) ? (int)$item['year'] : null,
                     legalStatus: $item['legalStatus'] ?? null,
                     categories: $categories,
                 );
 
-                $fetched++;
             }
+            $fetched += count($prods);
 
-            $page++;
+            $start += self::PAGE_SIZE;
         } while ($total !== null && $fetched < $total);
     }
 }

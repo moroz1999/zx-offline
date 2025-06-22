@@ -62,6 +62,7 @@ final readonly class ZxProdsSyncService
             legalStatus: $dto->legalStatus,
             categoryId: $cat?->id,
             categoryTitle: $cat?->title,
+            year: $dto->year,
         );
     }
 }

@@ -5,8 +5,11 @@ namespace App\Sync;
 
 use App\Api\ZxArtApiReleasesRequester;
 use App\Api\ZxReleaseApiDto;
+use App\Files\FileArchiveService;
 use App\Files\FileRecord;
 use App\Files\FilesRepository;
+use App\Tasks\TasksRepository;
+use App\Tasks\TaskTypes;
 use App\ZxReleases\ZxReleasesRepository;
 use App\ZxReleases\ZxReleaseRecord;
 use Psr\Log\LoggerInterface;
@@ -14,11 +17,15 @@ use Psr\Log\LoggerInterface;
 final readonly class ZxReleasesSyncService
 {
     public function __construct(
+        private TasksRepository           $tasks,
         private ZxArtApiReleasesRequester $releasesApi,
-        private ZxReleasesRepository $releasesRepository,
-        private FilesRepository $filesRepository,
-        private LoggerInterface $logger,
-    ) {}
+        private ZxReleasesRepository      $releasesRepository,
+        private FilesRepository           $filesRepository,
+        private FileArchiveService        $fileArchiveService,
+        private LoggerInterface           $logger,
+    )
+    {
+    }
 
     public function sync(): void
     {
@@ -41,7 +48,7 @@ final readonly class ZxReleasesSyncService
         }
 
         foreach (array_keys($existingIds) as $obsoleteId) {
-            $this->releasesRepository->delete($obsoleteId);
+            $this->tasks->addTask(TaskTypes::delete_release, (string)$obsoleteId);
             $this->logger->info("Release $obsoleteId deleted as removed from API");
         }
     }
@@ -50,8 +57,12 @@ final readonly class ZxReleasesSyncService
     {
         return new ZxReleaseRecord(
             id: $dto->id,
+            prodId: $dto->prodId,
             title: $dto->title,
             dateModified: $dto->dateModified,
+            year: $dto->year,
+            releaseType: $dto->releaseType,
+            version: $dto->version,
         );
     }
 
@@ -63,7 +74,6 @@ final readonly class ZxReleasesSyncService
     private function updateRelease(ZxReleaseRecord $record): void
     {
         $this->releasesRepository->update($record);
-//        $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
     }
 
     private function syncFiles(int $releaseId, array $apiFiles): void
@@ -103,7 +113,8 @@ final readonly class ZxReleasesSyncService
         }
 
         foreach (array_keys($existingMap) as $obsoleteFileId) {
-            $this->filesRepository->delete($obsoleteFileId);
+            $this->tasks->addTask(TaskTypes::delete_release_file, (string)$obsoleteFileId);
+
             $this->logger->info("File $obsoleteFileId deleted as removed from API");
         }
     }
@@ -111,5 +122,26 @@ final readonly class ZxReleasesSyncService
     public function syncByProdId(int $id): void
     {
 
+    }
+
+    public function deleteRelease(int $releaseId): void
+    {
+        $files = $this->filesRepository->getByReleaseId($releaseId);
+        array_map(fn(FileRecord $file) => $this->deleteReleaseFile($file->id), $files);
+
+        $this->releasesRepository->delete($releaseId);
+        $this->logger->info("Release $releaseId deleted");
+    }
+
+    public function deleteReleaseFile(int $fileId): void
+    {
+        $file = $this->filesRepository->getById($fileId);
+        if (!$file) {
+            return;
+        }
+        $this->fileArchiveService->deleteFile($file);
+        $this->filesRepository->delete($fileId);
+
+        $this->logger->info("Release $file->id $file->filePath deleted");
     }
 }

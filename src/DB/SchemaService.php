@@ -77,12 +77,11 @@ readonly class SchemaService
             $schema = new Schema();
             $tasks = $schema->createTable(Tables::tasks->name);
 
-            $tasks->addColumn('id', 'string')->setNotnull(true);
+            $tasks->addColumn('id', 'string');
             $tasks->addColumn('type', 'string');
-            $tasks->addColumn('target_id', 'string', ['notnull' => false]);
+            $tasks->addColumn('target_id', 'string')->setNotnull(false);
             $tasks->addColumn('status', 'string', ['default' => 'todo']);
             $tasks->addColumn('attempts', 'integer', ['default' => 0]);
-            $tasks->addColumn('last_error', 'text', ['notnull' => false]);
             $tasks->addColumn('created_at', 'datetime');
 
             $tasks->setPrimaryKey(['id']);
@@ -100,13 +99,13 @@ readonly class SchemaService
             $schema = new Schema();
             $prods = $schema->createTable(Tables::zx_prods->name);
 
-            $prods->addColumn('id', 'integer')->setNotnull(true);
-
+            $prods->addColumn('id', 'integer');
             $prods->addColumn('title', 'string');
             $prods->addColumn('date_modified', 'integer');
-            $prods->addColumn('legal_status', 'string', ['notnull' => false]);
-            $prods->addColumn('category_id', 'integer', ['notnull' => false]);
-            $prods->addColumn('category_title', 'string', ['notnull' => false]);
+            $prods->addColumn('year', 'integer')->setNotnull(false);
+            $prods->addColumn('legal_status', 'string')->setNotnull(false);
+            $prods->addColumn('category_id', 'integer')->setNotnull(false);
+            $prods->addColumn('category_title', 'string')->setNotnull(false);
 
             $prods->setPrimaryKey(['id']);
 
@@ -123,8 +122,12 @@ readonly class SchemaService
             $schema = new Schema();
             $releases = $schema->createTable(Tables::zx_releases->name);
 
-            $releases->addColumn('id', 'integer')->setNotnull(true);
+            $releases->addColumn('id', 'integer');
+            $releases->addColumn('prod_id', 'integer');
             $releases->addColumn('title', 'string');
+            $releases->addColumn('release_type', 'string');
+            $releases->addColumn('year', 'integer')->setNotnull(false);
+            $releases->addColumn('version', 'string')->setNotnull(false);
             $releases->addColumn('date_modified', 'integer');
 
             $releases->setPrimaryKey(['id']);
@@ -140,8 +143,8 @@ readonly class SchemaService
             $schema = new Schema();
             $files = $schema->createTable(Tables::files->name);
 
-            $files->addColumn('id', 'integer')->setNotnull(true);
-            $files->addColumn('zx_release_id', 'integer')->setNotnull(true);
+            $files->addColumn('id', 'integer');
+            $files->addColumn('zx_release_id', 'integer');
             $files->addColumn('md5', 'string');
             $files->addColumn('type', 'string');
             $files->addColumn('file_path', 'string');

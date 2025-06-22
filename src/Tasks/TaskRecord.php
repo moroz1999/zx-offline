@@ -12,7 +12,6 @@ final readonly class TaskRecord
         public ?string $targetId,
         public string  $status,
         public int     $attempts,
-        public ?string $lastError,
         public string  $createdAt,
     )
     {
@@ -26,7 +25,6 @@ final readonly class TaskRecord
             $data['target_id'],
             $data['status'],
             (int)$data['attempts'],
-            $data['last_error'],
             $data['created_at'],
         );
     }

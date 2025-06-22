@@ -7,9 +7,15 @@ final readonly class ZxReleaseApiDto
 {
     /** @param FileApiDto[] $files */
     public function __construct(
-        public int $id,
+        public int    $id,
         public string $title,
-        public int $dateModified,
-        public array $files = [],
-    ) {}
+        public int    $dateModified,
+        public ?int   $year,
+        public string $releaseType,
+        public string $version,
+        public int    $prodId,
+        public array  $files = [],
+    )
+    {
+    }
 }

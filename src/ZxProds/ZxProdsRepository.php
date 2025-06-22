@@ -53,6 +53,7 @@ final readonly class ZxProdsRepository
                 legalStatus: $row['legal_status'],
                 categoryId: $row['category_id'],
                 categoryTitle: $row['category_title'],
+                year: $row['year'],
             ) : null;
         } catch (Exception $e) {
             throw new ZxProdException($e->getMessage());
@@ -72,6 +73,7 @@ final readonly class ZxProdsRepository
                 'legal_status' => $data->legalStatus,
                 'category_id' => $data->categoryId,
                 'category_title' => $data->categoryTitle,
+                'year' => $data->year,
             ]);
         } catch (Exception $e) {
             throw new ZxProdException($e->getMessage());
