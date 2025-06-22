@@ -6,6 +6,7 @@ namespace App\Sync;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 
 final readonly class DownloadService
 {
@@ -33,10 +34,10 @@ final readonly class DownloadService
                 ]);
 
                 $stream = $response->getBody();
-                $target = fopen($targetPath, 'w');
+                $target = fopen($targetPath, 'wb');
 
                 if (!$target) {
-                    throw new \RuntimeException("Cannot open target file: $targetPath");
+                    throw new RuntimeException("Cannot open target file: $targetPath");
                 }
 
                 $written = 0;
@@ -48,25 +49,25 @@ final readonly class DownloadService
                 fclose($target);
 
                 if ($written === 0) {
-                    throw new \RuntimeException("Downloaded file size is zero: $targetPath");
+                    throw new RuntimeException("Downloaded file size is zero: $targetPath");
                 }
 
-                if (!is_null($expectedMd5)) {
+                if ($expectedMd5 !== null) {
                     $actualMd5 = md5_file($targetPath);
                     if ($actualMd5 !== strtolower($expectedMd5)) {
-                        throw new \RuntimeException("MD5 mismatch: expected $expectedMd5, got $actualMd5");
+                        throw new RuntimeException("MD5 mismatch: expected $expectedMd5, got $actualMd5");
                     }
                 }
 
                 $this->logger->info("Downloaded successfully: $targetPath");
                 return;
 
-            } catch (GuzzleException|\RuntimeException $e) {
+            } catch (GuzzleException|RuntimeException $e) {
                 $attempt++;
                 $this->logger->warning("Download failed (attempt $attempt): {$e->getMessage()}");
 
                 if ($attempt > self::RETRY_LIMIT) {
-                    throw new \RuntimeException("Failed to download file after {$attempt} attempts", 0, $e);
+                    throw new RuntimeException("Failed to download file after {$attempt} attempts", 0, $e);
                 }
 
                 sleep(self::RETRY_DELAY_SEC);
