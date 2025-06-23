@@ -75,7 +75,7 @@ final class TosecNameResolver
 
     private function makePublisher(ZxProdRecord $prod, ZxReleaseRecord $release): string
     {
-        $publisher = trim($release->publishers ?: $prod->publishers ?: '-');
+        $publisher = trim($prod->publishers ?: '-');
         return "({$publisher})";
     }
 
@@ -87,7 +87,7 @@ final class TosecNameResolver
         }
 
         if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
-            return null; // языки идут в [tr], не в ()
+            $langs = $prod->languages ?: '';
         }
         return "({$langs})";
     }
@@ -120,7 +120,8 @@ final class TosecNameResolver
             if ($release->publishers) {
                 $sub[] = $release->publishers;
             }
-            $flags[] = '[h ' . implode(' ', $sub) . ']';
+            $releaser = implode(' ', $sub);
+            $flags[] = '[h' . ($releaser ? ' ' . implode(' ', $sub) : '') . ']';
         }
 
         if ($release->releaseType === 'localization') {

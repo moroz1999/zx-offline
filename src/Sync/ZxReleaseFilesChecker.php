@@ -46,6 +46,7 @@ final readonly class ZxReleaseFilesChecker
         foreach ($existingFiles as $file) {
             $existingMap[$file->id] = $file;
         }
+        $tosecNamesMap = $this->tosecNameResolver->generateTosecNames($prod, $release, $existingFiles);
 
         foreach ($existingFiles as $fileDto) {
             $tosecName = $this->tosecNameResolver->generateFileName($prod, $release, $existingFiles, $fileDto);
