@@ -10,6 +10,8 @@ final readonly class ZxReleaseRecord
         public int     $prodId,
         public string  $title,
         public int     $dateModified,
+        public ?string $languages,
+        public ?string $publishers,
         public ?int    $year,
         public string  $releaseType,
         public ?string $version,

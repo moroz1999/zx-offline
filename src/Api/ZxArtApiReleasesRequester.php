@@ -9,7 +9,7 @@ use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class ZxArtApiReleasesRequester
 {
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc';
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
     private const PAGE_SIZE = 10;
 
     public function __construct(
@@ -28,7 +28,7 @@ final readonly class ZxArtApiReleasesRequester
         $fetched = 0;
         $total = null;
         $debugLimit = null;
-        $debugLimit = 10;
+        $debugLimit = 30;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
@@ -62,11 +62,14 @@ final readonly class ZxArtApiReleasesRequester
                 if (empty($files)) {
                     continue;
                 }
+                $publishers = array_map(static fn(array $publisher) => $publisher['title'], $item['publishersInfo'] ?? []);
 
                 yield new ZxReleaseApiDto(
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
+                    languages: isset($item['language']) ? implode(', ', $item['language']) : null,
+                    publishers: $publishers !== [] ? implode(', ', $publishers) : null,
                     year: isset($item['year']) ? (int)$item['year'] : null,
                     releaseType: (string)$item['releaseType'],
                     version: (string)($item['version'] ?? ''),

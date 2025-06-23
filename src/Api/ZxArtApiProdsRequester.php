@@ -9,7 +9,8 @@ use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class ZxArtApiProdsRequester
 {
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc';
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
 //    private const PAGE_SIZE = 1000;
     private const PAGE_SIZE = 10;
 
@@ -57,11 +58,14 @@ final readonly class ZxArtApiProdsRequester
                         title: $cat['title'],
                     );
                 }
+                $publishers = array_map(static fn(array $publisher) => $publisher['title'], $item['publishersInfo'] ?? []);
 
                 yield new ZxProdApiDto(
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
+                    languages: isset($item['language']) ? implode(', ', $item['language']) : null,
+                    publishers: $publishers !== [] ? implode(', ', $publishers) : null,
                     year: isset($item['year']) ? (int)$item['year'] : null,
                     legalStatus: $item['legalStatus'] ?? null,
                     categories: $categories,

@@ -13,7 +13,9 @@ final readonly class ZxProdApiDto
         public int     $id,
         public string  $title,
         public int     $dateModified,
-        public ?int     $year,
+        public ?string $languages,
+        public ?string $publishers,
+        public ?int    $year,
         public ?string $legalStatus,
         public array   $categories = [],
     )

@@ -39,11 +39,13 @@ final readonly class ZxReleasesSyncService
             if (!$existing) {
                 $this->createRelease($record);
                 $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
-                $this->logger->info("Release $record->id created");
+                $this->logger->info("Release $record->id $record->title created");
             } elseif ($record->dateModified > $existing->dateModified) {
                 $this->updateRelease($record);
                 $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
-                $this->logger->info("Release $record->id updated");
+                $this->logger->info("Release $record->id $record->title updated");
+            } else {
+                $this->logger->info("Release $record->id $record->title is not modified, skipped");
             }
 
             $this->syncFileRecords($record->id, $apiRelease->files);
@@ -62,6 +64,8 @@ final readonly class ZxReleasesSyncService
             prodId: $dto->prodId,
             title: $dto->title,
             dateModified: $dto->dateModified,
+            languages: $dto->languages,
+            publishers: $dto->publishers,
             year: $dto->year,
             releaseType: $dto->releaseType,
             version: $dto->version,

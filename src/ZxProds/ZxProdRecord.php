@@ -9,6 +9,8 @@ final readonly class ZxProdRecord
         public int     $id,
         public string  $title,
         public int     $dateModified,
+        public ?string $languages,
+        public ?string $publishers,
         public ?string $legalStatus,
         public ?int    $categoryId,
         public ?string $categoryTitle,

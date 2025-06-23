@@ -72,6 +72,8 @@ final readonly class ZxProdsSyncService
             id: $dto->id,
             title: $dto->title,
             dateModified: $dto->dateModified,
+            languages: $dto->languages,
+            publishers: $dto->publishers,
             legalStatus: $dto->legalStatus,
             categoryId: $cat?->id,
             categoryTitle: $cat?->title,

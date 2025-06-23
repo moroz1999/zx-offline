@@ -18,6 +18,7 @@ final readonly class ZxReleaseFilesChecker
         private ZxProdsRepository    $prodsRepository,
         private DownloadService      $downloadService,
         private FileArchiveService   $fileArchiveService,
+        private TosecNameResolver    $tosecNameResolver,
         private LoggerInterface      $logger,
     )
     {
@@ -47,10 +48,11 @@ final readonly class ZxReleaseFilesChecker
         }
 
         foreach ($existingFiles as $fileDto) {
-            $generated = $this->generateFileName($prod, $release, $fileDto);
+            $tosecName = $this->tosecNameResolver->generateFileName($prod, $release, $existingFiles, $fileDto);
+            $filePath = '' . $tosecName;
             $fileId = $fileDto->id;
 
-            $archivePath = $this->fileArchiveService->getArchiveBasePath() . $generated;
+            $archivePath = $this->fileArchiveService->getArchiveBasePath() . $filePath;
 
             if (!$this->fileArchiveService->fileExists($fileDto)) {
                 $this->logger->debug("File $fileId (Prod $prod->id \"$prod->title\" / Release $release->id \"$release->title\") is missing, downloading");
@@ -59,39 +61,23 @@ final readonly class ZxReleaseFilesChecker
             }
 
             $existingFile = $existingMap[$fileId];
-            if ($existingFile->filePath !== $generated) {
+            if ($existingFile->filePath !== $filePath) {
                 $updated = new FileRecord(
                     id: $existingFile->id,
                     zxReleaseId: $existingFile->zxReleaseId,
                     md5: $existingFile->md5,
                     type: $existingFile->type,
-                    filePath: $generated
+                    filePath: $filePath
                 );
 
                 if ($existingFile->filePath !== null) {
-                    $this->fileArchiveService->renameFile($existingFile, $generated);
-                    $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->filePath}' -> '{$generated}'");
+                    $this->fileArchiveService->renameFile($existingFile, $filePath);
+                    $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->filePath}' -> '{$tosecName}'");
                 }
                 $this->filesRepository->update($updated);
             }
 
             unset($existingMap[$fileId]);
         }
-    }
-
-    private function generateFileName($prod, $release, FileRecord $fileDto): string
-    {
-        $year = $release->year ?? $prod->year;
-        $parts = [$prod->title];
-
-        if ($release->releaseType) {
-            $parts[] = "({$release->releaseType})";
-        }
-        if ($year) {
-            $parts[] = "($year)";
-        }
-
-        $ext = strtolower($fileDto->type);
-        return trim(implode(' ', $parts)) . '.' . $ext;
     }
 }

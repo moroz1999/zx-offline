@@ -102,6 +102,8 @@ readonly class SchemaService
             $prods->addColumn('id', 'integer');
             $prods->addColumn('title', 'string');
             $prods->addColumn('date_modified', 'integer');
+            $prods->addColumn('languages', 'string')->setNotnull(false);
+            $prods->addColumn('publishers', 'string')->setNotnull(false);
             $prods->addColumn('year', 'integer')->setNotnull(false);
             $prods->addColumn('legal_status', 'string')->setNotnull(false);
             $prods->addColumn('category_id', 'integer')->setNotnull(false);
@@ -126,6 +128,8 @@ readonly class SchemaService
             $releases->addColumn('prod_id', 'integer');
             $releases->addColumn('title', 'string');
             $releases->addColumn('release_type', 'string');
+            $releases->addColumn('languages', 'string')->setNotnull(false);
+            $releases->addColumn('publishers', 'string')->setNotnull(false);
             $releases->addColumn('year', 'integer')->setNotnull(false);
             $releases->addColumn('version', 'string')->setNotnull(false);
             $releases->addColumn('date_modified', 'integer');

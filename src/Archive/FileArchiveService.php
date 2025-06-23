@@ -9,7 +9,7 @@ use App\Files\FileRecord;
 final class FileArchiveService
 {
     public function __construct(
-        private string $archiveBasePath
+        private string            $archiveBasePath,
     )
     {
     }
@@ -24,7 +24,6 @@ final class FileArchiveService
 
     public function renameFile(FileRecord $file, string $newFileName): void
     {
-
         $filePath = $this->getFilePath($file);
         if (is_file($filePath)) {
             rename($filePath, $newFileName);
