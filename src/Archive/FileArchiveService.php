@@ -24,6 +24,7 @@ final class FileArchiveService
 
     public function renameFile(FileRecord $file, string $newFileName): void
     {
+
         $filePath = $this->getFilePath($file);
         if (is_file($filePath)) {
             rename($filePath, $newFileName);

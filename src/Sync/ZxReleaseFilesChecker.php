@@ -38,6 +38,9 @@ final readonly class ZxReleaseFilesChecker
         }
 
         $existingFiles = $this->filesRepository->getByReleaseId($release->id);
+        /**
+         * @var array<int, FileRecord> $existingMap
+         */
         $existingMap = [];
         foreach ($existingFiles as $file) {
             $existingMap[$file->id] = $file;
@@ -50,11 +53,9 @@ final readonly class ZxReleaseFilesChecker
             $archivePath = $this->fileArchiveService->getArchiveBasePath() . $generated;
 
             if (!$this->fileArchiveService->fileExists($fileDto)) {
-                $this->logger->info("File $fileId missing, downloading");
-
+                $this->logger->debug("File $fileId (Prod $prod->id \"$prod->title\" / Release $release->id \"$release->title\") is missing, downloading");
                 $zxArtUrl = "https://zxart.ee/zxfile/id:$release->id/fileId:$fileId/";
                 $this->downloadService->downloadFile($zxArtUrl, $archivePath, $fileDto->md5);
-                continue;
             }
 
             $existingFile = $existingMap[$fileId];
@@ -67,10 +68,11 @@ final readonly class ZxReleaseFilesChecker
                     filePath: $generated
                 );
 
-                $this->fileArchiveService->renameFile($existingFile, $generated);
+                if ($existingFile->filePath !== null) {
+                    $this->fileArchiveService->renameFile($existingFile, $generated);
+                    $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->filePath}' -> '{$generated}'");
+                }
                 $this->filesRepository->update($updated);
-
-                $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->fileName}' -> '{$generated}'");
             }
 
             unset($existingMap[$fileId]);
