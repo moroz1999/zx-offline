@@ -96,6 +96,8 @@ final readonly class ZxReleasesSyncService
                 zxReleaseId: $releaseId,
                 md5: $fileDto->md5,
                 type: $fileDto->type,
+                originalFileName: $fileDto->fileName,
+                fileName: null,
                 filePath: null,
             );
 

@@ -16,7 +16,22 @@ final class TosecNameResolver
         'snapshot' => ['sna', 'szx', 'dck', 'z80', 'slt'],
     ];
 
-    public function generateFileName(
+    public function generateTosecName(
+        ZxProdRecord    $prod,
+        ZxReleaseRecord $release,
+        array           $allFiles,
+        FileRecord      $fileDto,
+        int             $duplicateIndex = 0
+    ): string
+    {
+        $baseName = $this->buildBaseName($prod, $release, $allFiles, $fileDto);
+        $dumpFlag = $this->buildDumpFlag($prod, $release, $duplicateIndex);
+        $ext = strtolower($fileDto->type);
+
+        return $baseName . $dumpFlag . '.' . $ext;
+    }
+
+    private function buildBaseName(
         ZxProdRecord    $prod,
         ZxReleaseRecord $release,
         array           $files,
@@ -27,36 +42,59 @@ final class TosecNameResolver
 
         $parts[] = $this->makeTitle($prod->title);
         if ($release->version) {
-            $parts[] = "v{$release->version}";
+            $parts[] = 'v' . $release->version;
         }
         if ($release->releaseType === 'demoversion') {
             $parts[] = '(demo)';
         }
         $parts[] = $this->makeProdYear($prod);
-        $parts[] = $this->makePublisher($prod, $release);
-
+        $parts[] = $this->makePublisher($prod);
         $languagesFlag = $this->makeLanguages($prod, $release);
         if ($languagesFlag) {
             $parts[] = $languagesFlag;
         }
-
         if (count($files) > 1) {
             $parts[] = $this->makeMediaPart($files, $fileDto);
         }
-
         $copyright = $this->makeCopyright($prod);
         if ($copyright) {
             $parts[] = $copyright;
         }
 
-        $dumpFlags = $this->makeDumpFlags($prod, $release);
-        $name = implode('', $parts);
-        if (!empty($dumpFlags)) {
-            $name .= implode('', $dumpFlags);
-        }
+        return implode('', $parts);
+    }
 
-        $ext = strtolower($fileDto->type);
-        return $name . '.' . $ext;
+    private function buildDumpFlag(ZxProdRecord $prod, ZxReleaseRecord $release, int $index): string
+    {
+        $flag = '';
+        $indexString = $index > 1 ? $index : '';
+        if (in_array($prod->legalStatus, ['forbidden', 'forbiddenzxart', 'insales'], true)) {
+            $flag = '[p' . $indexString . ']';
+        } elseif (in_array($prod->legalStatus, ['mia', 'recovered', 'unreleased'], true)) {
+            $flag = '[a' . $indexString . ']';
+        } elseif (in_array($release->releaseType, ['crack', 'mod', 'adaptation'], true)) {
+            $sub = [];
+            if ($release->year) {
+                $sub[] = $release->year;
+            }
+            if ($release->publishers) {
+                $sub[] = $release->publishers;
+            }
+            $flag = '[h' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
+        } elseif ($release->releaseType === 'localization') {
+            $langs = trim($release->languages ?: $prod->languages ?: '');
+            if ($langs) {
+                $flag = '[tr' . $indexString . ' ' . $langs . ']';
+            }
+        } elseif ($release->releaseType === 'rerelease') {
+            $flag = '[a' . $indexString . ']';
+        } elseif (in_array($release->releaseType, ['mia', 'corrupted', 'incomplete'], true)) {
+            $flag = '[b' . $indexString . ']';
+        }
+        if ($flag === '' && $index > 0) {
+            $flag = '[a' . $indexString . ']';
+        }
+        return $flag;
     }
 
     private function makeTitle(string $title): string
@@ -73,7 +111,7 @@ final class TosecNameResolver
         return $prod->year ? "({$prod->year})" : '(19xx)';
     }
 
-    private function makePublisher(ZxProdRecord $prod, ZxReleaseRecord $release): string
+    private function makePublisher(ZxProdRecord $prod): string
     {
         $publisher = trim($prod->publishers ?: '-');
         return "({$publisher})";
@@ -85,7 +123,6 @@ final class TosecNameResolver
         if (!$langs) {
             return null;
         }
-
         if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
             $langs = $prod->languages ?: '';
         }
@@ -98,48 +135,6 @@ final class TosecNameResolver
             'allowed', 'allowedzxart' => '(PD)',
             default => null,
         };
-    }
-
-    private function makeDumpFlags(ZxProdRecord $prod, ZxReleaseRecord $release): array
-    {
-        $flags = [];
-
-        if (in_array($prod->legalStatus, ['forbidden', 'forbiddenzxart', 'insales'], true)) {
-            $flags[] = '[p]';
-        }
-
-        if (in_array($prod->legalStatus, ['mia', 'recovered', 'unreleased'], true)) {
-            $flags[] = '[a]';
-        }
-
-        if (in_array($release->releaseType, ['crack', 'mod', 'adaptation'], true)) {
-            $sub = [];
-            if ($release->year) {
-                $sub[] = $release->year;
-            }
-            if ($release->publishers) {
-                $sub[] = $release->publishers;
-            }
-            $releaser = implode(' ', $sub);
-            $flags[] = '[h' . ($releaser ? ' ' . implode(' ', $sub) : '') . ']';
-        }
-
-        if ($release->releaseType === 'localization') {
-            $langs = trim($release->languages ?: $prod->languages ?: '');
-            if ($langs) {
-                $flags[] = '[tr ' . $langs . ']';
-            }
-        }
-
-        if ($release->releaseType === 'rerelease') {
-            $flags[] = '[a]';
-        }
-
-        if (in_array($release->releaseType, ['mia', 'corrupted', 'incomplete'], true)) {
-            $flags[] = '[b]';
-        }
-
-        return $flags;
     }
 
     private function makeMediaPart(array $files, FileRecord $currentFile): string
@@ -165,10 +160,40 @@ final class TosecNameResolver
             default => 'File',
         };
 
-        if ($total < 10) {
-            return "({$label} {$position} of {$total})";
+        $mediaPart = $total < 10
+            ? "({$label} {$position} of {$total})"
+            : sprintf('(%s %02d of %02d)', $label, $position, $total);
+
+        $sideInfo = $this->detectSideInfoFromOriginalFileName($currentFile->originalFileName);
+        if ($sideInfo !== null) {
+            $mediaPart .= " {$sideInfo}";
         }
-        return sprintf('(%s %02d of %02d)', $label, $position, $total);
+
+        return $mediaPart;
+    }
+
+    private function detectSideInfoFromOriginalFileName(?string $originalFileName): ?string
+    {
+        if (!$originalFileName) {
+            return null;
+        }
+
+        // Side A/B
+        if (preg_match('/Side\s*([A-Z])/i', $originalFileName, $m)) {
+            return "Side " . strtoupper($m[1]);
+        }
+
+        // Side 1/2
+        if (preg_match('/Side\s*(\d+)/i', $originalFileName, $m)) {
+            return "Side {$m[1]}";
+        }
+
+        // Part 1/2
+        if (preg_match('/Part\s*(\d+)/i', $originalFileName, $m)) {
+            return "Part {$m[1]}";
+        }
+
+        return null;
     }
 
     private function detectMediaType(string $extension): string

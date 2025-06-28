@@ -151,6 +151,8 @@ readonly class SchemaService
             $files->addColumn('zx_release_id', 'integer');
             $files->addColumn('md5', 'string');
             $files->addColumn('type', 'string');
+            $files->addColumn('original_file_name', 'string');
+            $files->addColumn('file_name', 'string')->setNotnull(false);
             $files->addColumn('file_path', 'string')->setNotnull(false);
 
             $files->setPrimaryKey(['id']);

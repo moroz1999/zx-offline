@@ -45,6 +45,8 @@ final readonly class FilesRepository
             'id' => $data->id,
             'md5' => $data->md5,
             'type' => $data->type,
+            'original_file_name' => $data->originalFileName,
+            'file_name' => $data->fileName,
             'zx_release_id' => $data->zxReleaseId,
             'file_path' => $data->filePath,
         ]);
@@ -55,6 +57,8 @@ final readonly class FilesRepository
         $this->db->update(Tables::files->name, [
             'md5' => $data->md5,
             'type' => $data->type,
+            'original_file_name' => $data->originalFileName,
+            'file_name' => $data->fileName,
             'zx_release_id' => $data->zxReleaseId,
             'file_path' => $data->filePath,
         ], ['id' => $data->id]);
@@ -88,7 +92,22 @@ final readonly class FilesRepository
             zxReleaseId: $row['zx_release_id'],
             md5: $row['md5'],
             type: $row['type'],
+            originalFileName: $row['original_file_name'],
+            fileName: $row['file_name'],
             filePath: $row['file_path'],
         );
+    }
+
+    public function existsFileName(string $fileName): bool
+    {
+        $qb = $this->db->createQueryBuilder();
+        return (bool)$qb
+            ->select('1')
+            ->from(Tables::files->name)
+            ->where('file_name = :name')
+            ->setParameter('name', $fileName)
+            ->setMaxResults(1)
+            ->executeQuery()
+            ->fetchOne();
     }
 }

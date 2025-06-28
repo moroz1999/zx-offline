@@ -28,7 +28,7 @@ final readonly class ZxReleaseFilesChecker
     {
         $release = $this->releasesRepository->getById($id);
         if (!$release) {
-            $this->logger->warning("Release {$release->id} not found");
+            $this->logger->warning("Release $id not found");
             return;
         }
 
@@ -39,20 +39,21 @@ final readonly class ZxReleaseFilesChecker
         }
 
         $existingFiles = $this->filesRepository->getByReleaseId($release->id);
-        /**
-         * @var array<int, FileRecord> $existingMap
-         */
         $existingMap = [];
         foreach ($existingFiles as $file) {
             $existingMap[$file->id] = $file;
         }
-        $tosecNamesMap = $this->tosecNameResolver->generateTosecNames($prod, $release, $existingFiles);
 
         foreach ($existingFiles as $fileDto) {
-            $tosecName = $this->tosecNameResolver->generateFileName($prod, $release, $existingFiles, $fileDto);
-            $filePath = '' . $tosecName;
-            $fileId = $fileDto->id;
+            $duplicateIndex = 0;
 
+            do {
+                $tosecName = $this->tosecNameResolver->generateTosecName($prod, $release, $existingFiles, $fileDto, $duplicateIndex);
+                $duplicateIndex++;
+            } while ($this->filesRepository->existsFileName($tosecName));
+
+            $filePath = $tosecName;
+            $fileId = $fileDto->id;
             $archivePath = $this->fileArchiveService->getArchiveBasePath() . $filePath;
 
             if (!$this->fileArchiveService->fileExists($fileDto)) {
@@ -68,6 +69,8 @@ final readonly class ZxReleaseFilesChecker
                     zxReleaseId: $existingFile->zxReleaseId,
                     md5: $existingFile->md5,
                     type: $existingFile->type,
+                    originalFileName: $existingFile->originalFileName,
+                    fileName: $tosecName,
                     filePath: $filePath
                 );
 
@@ -75,10 +78,12 @@ final readonly class ZxReleaseFilesChecker
                     $this->fileArchiveService->renameFile($existingFile, $filePath);
                     $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->filePath}' -> '{$tosecName}'");
                 }
+
                 $this->filesRepository->update($updated);
             }
 
             unset($existingMap[$fileId]);
         }
     }
+
 }
