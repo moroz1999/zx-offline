@@ -10,7 +10,7 @@ use GuzzleHttp\Exception\GuzzleException;
 final readonly class ZxArtApiReleasesRequester
 {
     private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
-    private const PAGE_SIZE = 10;
+    private const PAGE_SIZE = 20;
 
     public function __construct(
         private Client $client = new Client()

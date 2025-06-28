@@ -121,7 +121,7 @@ final readonly class ZxReleasesSyncService
         }
 
         foreach (array_keys($existingMap) as $obsoleteFileId) {
-            $this->tasks->addTask(TaskTypes::delete_release_file, (string)$obsoleteFileId);
+            $this->deleteReleaseFile($obsoleteFileId);
 
             $this->logger->info("File $obsoleteFileId deleted as removed from API");
         }

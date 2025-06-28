@@ -9,13 +9,29 @@ use App\Files\FileRecord;
 final class FileArchiveService
 {
     public function __construct(
-        private string            $archiveBasePath,
+        private string $archiveBasePath,
     )
     {
+        $this->archiveBasePath = realpath($this->archiveBasePath);
+        $this->archiveBasePath = rtrim($this->archiveBasePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
+        if (!is_dir($this->archiveBasePath)) {
+            mkdir($this->archiveBasePath, 0777, true);
+        }
+    }
+
+    public function checkPath(string $path): void
+    {
+        $filePath = $this->archiveBasePath . $path;
+        if (!is_dir($filePath)) {
+            mkdir($filePath, 0777, true);
+        }
     }
 
     public function deleteFile(FileRecord $file): void
     {
+        if ($file->filePath === null) {
+            return;
+        }
         $filePath = $this->getFilePath($file);
         if (is_file($filePath)) {
             unlink($filePath);
@@ -24,9 +40,11 @@ final class FileArchiveService
 
     public function renameFile(FileRecord $file, string $newFileName): void
     {
-        $filePath = $this->getFilePath($file);
-        if (is_file($filePath)) {
-            rename($filePath, $newFileName);
+        $currentFilePath = $this->getFilePath($file);
+        $newFullPath = $this->archiveBasePath . $newFileName;
+
+        if (is_file($currentFilePath)) {
+            rename($currentFilePath, $newFullPath);
         }
     }
 

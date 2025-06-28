@@ -1,14 +1,22 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Sync;
+namespace App\Archive;
 
 use App\Files\FileRecord;
+use App\Utils\Transliterator;
 use App\ZxProds\ZxProdRecord;
 use App\ZxReleases\ZxReleaseRecord;
 
 final class TosecNameResolver
 {
+    public function __construct(
+        private Transliterator $transliterator,
+    )
+    {
+
+    }
+
     private const FORMAT_GROUPS = [
         'disk' => ['dsk', 'trd', 'scl', 'fdi', 'udi', 'td0', 'd80', 'mgt', 'opd', 'mbd', 'img'],
         'tape' => ['tzx', 'tap', 'mdr', 'p', 'o'],
@@ -99,7 +107,8 @@ final class TosecNameResolver
 
     private function makeTitle(string $title): string
     {
-        $title = trim(preg_replace('/[\/\\\:\*\?"<>\|]/', '', $title));
+        $title = $this->transliterator->transliterate($title);
+        $title = trim(preg_replace('/[\/\\\\:*?"<>|]/', '', $title));
         if (preg_match('/^(The|A|Le|La|Les|Die|De)\s+(.*)$/i', $title, $m)) {
             return "{$m[2]}, {$m[1]} ";
         }

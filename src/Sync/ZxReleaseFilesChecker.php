@@ -4,22 +4,25 @@ declare(strict_types=1);
 namespace App\Sync;
 
 use App\Archive\FileArchiveService;
-use App\Files\FilesRepository;
+use App\Archive\FileDirectoryResolver;
+use App\Archive\TosecNameResolver;
 use App\Files\FileRecord;
-use App\ZxReleases\ZxReleasesRepository;
+use App\Files\FilesRepository;
 use App\ZxProds\ZxProdsRepository;
+use App\ZxReleases\ZxReleasesRepository;
 use Psr\Log\LoggerInterface;
 
 final readonly class ZxReleaseFilesChecker
 {
     public function __construct(
-        private FilesRepository      $filesRepository,
-        private ZxReleasesRepository $releasesRepository,
-        private ZxProdsRepository    $prodsRepository,
-        private DownloadService      $downloadService,
-        private FileArchiveService   $fileArchiveService,
-        private TosecNameResolver    $tosecNameResolver,
-        private LoggerInterface      $logger,
+        private FilesRepository       $filesRepository,
+        private ZxReleasesRepository  $releasesRepository,
+        private ZxProdsRepository     $prodsRepository,
+        private DownloadService       $downloadService,
+        private FileArchiveService    $fileArchiveService,
+        private TosecNameResolver     $tosecNameResolver,
+        private FileDirectoryResolver $fileDirectoryResolver,
+        private LoggerInterface       $logger,
     )
     {
     }
@@ -52,7 +55,10 @@ final readonly class ZxReleaseFilesChecker
                 $duplicateIndex++;
             } while ($this->filesRepository->existsFileName($tosecName));
 
-            $filePath = $tosecName;
+            $relativePath = $this->fileDirectoryResolver->resolve($prod, $tosecName);
+            $this->fileArchiveService->checkPath($relativePath);
+            $filePath = $relativePath . $tosecName;
+
             $fileId = $fileDto->id;
             $archivePath = $this->fileArchiveService->getArchiveBasePath() . $filePath;
 
