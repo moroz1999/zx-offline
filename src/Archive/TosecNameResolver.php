@@ -7,11 +7,12 @@ use App\Files\FileRecord;
 use App\Utils\Transliterator;
 use App\ZxProds\ZxProdRecord;
 use App\ZxReleases\ZxReleaseRecord;
+use RuntimeException;
 
 final class TosecNameResolver
 {
     public function __construct(
-        private Transliterator $transliterator,
+        private readonly Transliterator $transliterator,
     )
     {
 
@@ -110,20 +111,20 @@ final class TosecNameResolver
         $title = $this->transliterator->transliterate($title);
         $title = trim(preg_replace('/[\/\\\\:*?"<>|]/', '', $title));
         if (preg_match('/^(The|A|Le|La|Les|Die|De)\s+(.*)$/i', $title, $m)) {
-            return "{$m[2]}, {$m[1]} ";
+            return "$m[2], $m[1] ";
         }
         return $title . ' ';
     }
 
     private function makeProdYear(ZxProdRecord $prod): string
     {
-        return $prod->year ? "({$prod->year})" : '(19xx)';
+        return $prod->year ? "($prod->year)" : '(19xx)';
     }
 
     private function makePublisher(ZxProdRecord $prod): string
     {
         $publisher = trim($prod->publishers ?: '-');
-        return "({$publisher})";
+        return "($publisher)";
     }
 
     private function makeLanguages(ZxProdRecord $prod, ZxReleaseRecord $release): ?string
@@ -135,7 +136,7 @@ final class TosecNameResolver
         if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
             $langs = $prod->languages ?: '';
         }
-        return "({$langs})";
+        return "($langs)";
     }
 
     private function makeCopyright(ZxProdRecord $prod): ?string
@@ -159,7 +160,7 @@ final class TosecNameResolver
         }
 
         if ($position === null) {
-            throw new \RuntimeException("Current file not found in files list");
+            throw new RuntimeException("Current file not found in files list");
         }
 
         $group = $this->detectMediaType($currentFile->type);
@@ -170,12 +171,12 @@ final class TosecNameResolver
         };
 
         $mediaPart = $total < 10
-            ? "({$label} {$position} of {$total})"
+            ? "($label $position of $total)"
             : sprintf('(%s %02d of %02d)', $label, $position, $total);
 
         $sideInfo = $this->detectSideInfoFromOriginalFileName($currentFile->originalFileName);
         if ($sideInfo !== null) {
-            $mediaPart .= " {$sideInfo}";
+            $mediaPart .= " $sideInfo";
         }
 
         return $mediaPart;
@@ -194,12 +195,12 @@ final class TosecNameResolver
 
         // Side 1/2
         if (preg_match('/Side\s*(\d+)/i', $originalFileName, $m)) {
-            return "Side {$m[1]}";
+            return "Side $m[1]";
         }
 
         // Part 1/2
         if (preg_match('/Part\s*(\d+)/i', $originalFileName, $m)) {
-            return "Part {$m[1]}";
+            return "Part $m[1]";
         }
 
         return null;
