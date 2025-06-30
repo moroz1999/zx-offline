@@ -75,36 +75,55 @@ final class TosecNameResolver
 
     private function buildDumpFlag(ZxProdRecord $prod, ZxReleaseRecord $release, int $index): string
     {
-        $flag = '';
-        $indexString = $index > 1 ? $index : '';
+        $indexString = $index > 1 ? (string)$index : '';
+        $sub = [];
+
+        if ($release->year) {
+            $sub[] = $release->year;
+        }
+
+        if ($release->publishers) {
+            $sub[] = $release->publishers;
+        }
+
+        $roleBasedFlags = [
+            'crack' => 'h',
+            'mod' => 'h',
+            'adaptation' => 'h',
+            'localization' => 'tr',
+            'rerelease' => 'a',
+            'mia' => 'b',
+            'corrupted' => 'b',
+            'incomplete' => 'b',
+        ];
+
         if (in_array($prod->legalStatus, ['forbidden', 'forbiddenzxart', 'insales'], true)) {
-            $flag = '[p' . $indexString . ']';
-        } elseif (in_array($prod->legalStatus, ['mia', 'recovered', 'unreleased'], true)) {
-            $flag = '[a' . $indexString . ']';
-        } elseif (in_array($release->releaseType, ['crack', 'mod', 'adaptation'], true)) {
-            $sub = [];
-            if ($release->year) {
-                $sub[] = $release->year;
-            }
-            if ($release->publishers) {
-                $sub[] = $release->publishers;
-            }
-            $flag = '[h' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
-        } elseif ($release->releaseType === 'localization') {
-            $langs = trim($release->languages ?: $prod->languages ?: '');
-            if ($langs) {
-                $flag = '[tr' . $indexString . ' ' . $langs . ']';
-            }
-        } elseif ($release->releaseType === 'rerelease') {
-            $flag = '[a' . $indexString . ']';
-        } elseif (in_array($release->releaseType, ['mia', 'corrupted', 'incomplete'], true)) {
-            $flag = '[b' . $indexString . ']';
+            return '[p' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
         }
-        if ($flag === '' && $index > 0) {
-            $flag = '[a' . $indexString . ']';
+
+        if (in_array($prod->legalStatus, ['mia', 'recovered', 'unreleased'], true)) {
+            return '[a' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
         }
-        return $flag;
+
+        $flagCode = $roleBasedFlags[$release->releaseType] ?? null;
+        if ($flagCode) {
+            if ($flagCode === 'tr') {
+                $langs = trim($release->languages ?: $prod->languages ?: '');
+                if ($langs) {
+                    return '[tr' . $indexString . ' ' . strtoupper($langs) . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
+                }
+            }
+
+            return '[' . $flagCode . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
+        }
+
+        if ($index > 0) {
+            return '[a' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
+        }
+
+        return '';
     }
+
 
     private function makeTitle(string $title): string
     {
@@ -136,6 +155,7 @@ final class TosecNameResolver
         if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
             $langs = $prod->languages ?: '';
         }
+        $langs = strtoupper($langs);
         return "($langs)";
     }
 
@@ -174,10 +194,10 @@ final class TosecNameResolver
             ? "($label $position of $total)"
             : sprintf('(%s %02d of %02d)', $label, $position, $total);
 
-        $sideInfo = $this->detectSideInfoFromOriginalFileName($currentFile->originalFileName);
-        if ($sideInfo !== null) {
-            $mediaPart .= " $sideInfo";
-        }
+//        $sideInfo = $this->detectSideInfoFromOriginalFileName($currentFile->originalFileName);
+//        if ($sideInfo !== null) {
+//            $mediaPart .= " $sideInfo";
+//        }
 
         return $mediaPart;
     }

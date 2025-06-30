@@ -28,7 +28,7 @@ final readonly class ZxArtApiReleasesRequester
         $fetched = 0;
         $total = null;
         $debugLimit = null;
-        $debugLimit = 50;
+        $debugLimit = 100;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
@@ -62,14 +62,29 @@ final readonly class ZxArtApiReleasesRequester
                 if (empty($files)) {
                     continue;
                 }
-                $publishers = array_map(static fn(array $publisher) => $publisher['title'], $item['publishersInfo'] ?? []);
+                $publisherNames = array_map(
+                    static fn(array $publisher) => $publisher['title'],
+                    $item['publishersInfo'] ?? []
+                );
 
+                $allowedRoles = ['unknown', 'localization', 'release', 'restoring', 'adaptation'];
+                $authorNames = array_map(
+                    static fn(array $author) => $author['title'],
+                    array_filter($item['authorsInfoShort'] ?? [], static function (array $author) use ($allowedRoles): bool {
+                        $intersection = array_intersect($allowedRoles, $author['roles'] ?? []);
+                        return !empty($intersection);
+                    })
+                );
+
+                $allCredits = array_unique(array_merge($publisherNames, $authorNames));
+
+                $publishers = $allCredits !== [] ? implode(', ', $allCredits) : null;
                 yield new ZxReleaseApiDto(
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
                     languages: isset($item['language']) ? implode(', ', $item['language']) : null,
-                    publishers: $publishers !== [] ? implode(', ', $publishers) : null,
+                    publishers: $publishers,
                     year: isset($item['year']) ? (int)$item['year'] : null,
                     releaseType: (string)$item['releaseType'],
                     version: (string)($item['version'] ?? ''),

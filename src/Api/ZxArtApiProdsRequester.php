@@ -52,7 +52,7 @@ final readonly class ZxArtApiProdsRequester
                 $fetched++;
                 $categories = [];
 
-                foreach ($item['categoriesInfo'] ?? [] as $cat) {
+                foreach ($item['rootCategoriesInfo'] ?? [] as $cat) {
                     $categories[] = new ZxCategoryDto(
                         id: (int)$cat['id'],
                         title: $cat['title'],

@@ -17,6 +17,7 @@ final readonly class ZxReleaseApiDto
         public string  $version,
         public int     $prodId,
         public array   $files = [],
+        public array   $authors = [],
     )
     {
     }
