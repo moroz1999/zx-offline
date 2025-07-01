@@ -68,6 +68,7 @@ final readonly class ZxReleasesRepository
                 'year' => $data->year,
                 'release_type' => $data->releaseType,
                 'version' => $data->version,
+                'hardware' => json_encode($data->hardware, JSON_THROW_ON_ERROR),
             ]);
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());
@@ -89,6 +90,7 @@ final readonly class ZxReleasesRepository
                 'year' => $data->year,
                 'release_type' => $data->releaseType,
                 'version' => $data->version,
+                'hardware' => json_encode($data->hardware, JSON_THROW_ON_ERROR),
             ], ['id' => $data->id]);
         } catch (Exception $e) {
             throw new ZxReleaseException($e->getMessage());
@@ -143,6 +145,7 @@ final readonly class ZxReleasesRepository
             year: $row['year'],
             releaseType: $row['release_type'],
             version: $row['version'],
+            hardware: json_decode($row['hardware'], false, 512, JSON_THROW_ON_ERROR),
         );
     }
 }

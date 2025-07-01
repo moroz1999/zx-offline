@@ -89,6 +89,7 @@ final readonly class ZxArtApiReleasesRequester
                     releaseType: (string)$item['releaseType'],
                     version: (string)($item['version'] ?? ''),
                     prodId: (int)$item['prodId'],
+                    hardware: $item['hardwareRequired'] ?? null,
                     files: $files,
                 );
 

@@ -12,11 +12,12 @@ use RuntimeException;
 final class TosecNameResolver
 {
     public function __construct(
-        private readonly Transliterator $transliterator,
+        private readonly Transliterator           $transliterator,
+        private readonly HardwarePlatformResolver $hardwarePlatformResolver,
     )
     {
-
     }
+
 
     private const FORMAT_GROUPS = [
         'disk' => ['dsk', 'trd', 'scl', 'fdi', 'udi', 'td0', 'd80', 'mgt', 'opd', 'mbd', 'img'],
@@ -58,13 +59,21 @@ final class TosecNameResolver
         }
         $parts[] = $this->makeProdYear($prod);
         $parts[] = $this->makePublisher($prod);
+
         $languagesFlag = $this->makeLanguages($prod, $release);
         if ($languagesFlag) {
             $parts[] = $languagesFlag;
         }
+
+        $hwExtras = $this->hardwarePlatformResolver->getAdditionalHardwareString($release);
+        if ($hwExtras) {
+            $parts[] = $hwExtras;
+        }
+
         if (count($files) > 1) {
             $parts[] = $this->makeMediaPart($files, $fileDto);
         }
+
         $copyright = $this->makeCopyright($prod);
         if ($copyright) {
             $parts[] = $copyright;
@@ -194,37 +203,33 @@ final class TosecNameResolver
             ? "($label $position of $total)"
             : sprintf('(%s %02d of %02d)', $label, $position, $total);
 
-//        $sideInfo = $this->detectSideInfoFromOriginalFileName($currentFile->originalFileName);
-//        if ($sideInfo !== null) {
-//            $mediaPart .= " $sideInfo";
-//        }
 
         return $mediaPart;
     }
 
-    private function detectSideInfoFromOriginalFileName(?string $originalFileName): ?string
-    {
-        if (!$originalFileName) {
-            return null;
-        }
-
-        // Side A/B
-        if (preg_match('/Side\s*([A-Z])/i', $originalFileName, $m)) {
-            return "Side " . strtoupper($m[1]);
-        }
-
-        // Side 1/2
-        if (preg_match('/Side\s*(\d+)/i', $originalFileName, $m)) {
-            return "Side $m[1]";
-        }
-
-        // Part 1/2
-        if (preg_match('/Part\s*(\d+)/i', $originalFileName, $m)) {
-            return "Part $m[1]";
-        }
-
-        return null;
-    }
+//    private function detectSideInfoFromOriginalFileName(?string $originalFileName): ?string
+//    {
+//        if (!$originalFileName) {
+//            return null;
+//        }
+//
+//        // Side A/B
+//        if (preg_match('/Side\s*([A-Z])/i', $originalFileName, $m)) {
+//            return "Side " . strtoupper($m[1]);
+//        }
+//
+//        // Side 1/2
+//        if (preg_match('/Side\s*(\d+)/i', $originalFileName, $m)) {
+//            return "Side $m[1]";
+//        }
+//
+//        // Part 1/2
+//        if (preg_match('/Part\s*(\d+)/i', $originalFileName, $m)) {
+//            return "Part $m[1]";
+//        }
+//
+//        return null;
+//    }
 
     private function detectMediaType(string $extension): string
     {

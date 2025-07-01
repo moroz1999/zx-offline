@@ -15,6 +15,7 @@ final readonly class ZxReleaseRecord
         public ?int    $year,
         public string  $releaseType,
         public ?string $version,
+        public ?array  $hardware,
     )
     {
     }

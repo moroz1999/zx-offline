@@ -69,6 +69,7 @@ final readonly class ZxReleasesSyncService
             year: $dto->year,
             releaseType: $dto->releaseType,
             version: $dto->version,
+            hardware: $dto->hardware,
         );
     }
 

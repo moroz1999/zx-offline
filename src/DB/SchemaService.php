@@ -130,6 +130,7 @@ readonly class SchemaService
             $releases->addColumn('release_type', 'string');
             $releases->addColumn('languages', 'string')->setNotnull(false);
             $releases->addColumn('publishers', 'string')->setNotnull(false);
+            $releases->addColumn('hardware', 'string')->setNotnull(false);
             $releases->addColumn('year', 'integer')->setNotnull(false);
             $releases->addColumn('version', 'string')->setNotnull(false);
             $releases->addColumn('date_modified', 'integer');

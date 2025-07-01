@@ -4,16 +4,19 @@ declare(strict_types=1);
 namespace App\Archive;
 
 use App\ZxProds\ZxProdRecord;
+use App\ZxReleases\ZxReleaseRecord;
 
 final readonly class FileDirectoryResolver
 {
     public function __construct(
+        private HardwarePlatformResolver $hardwarePlatformResolver,
     )
     {
     }
 
-    public function resolve(ZxProdRecord $zxProdRecord, string $fileName): string
+    public function resolve(ZxProdRecord $zxProdRecord, ZxReleaseRecord $release, string $fileName): string
     {
+        $platform = $this->hardwarePlatformResolver->resolvePlatformFolder($release);
         $category = $zxProdRecord->categoryTitle ?: 'Misc';
 
         $firstChar = mb_strtoupper(mb_substr($fileName, 0, 1));
@@ -26,6 +29,8 @@ final readonly class FileDirectoryResolver
             $letter = 'other';
         }
 
-        return $category . DIRECTORY_SEPARATOR . $letter . DIRECTORY_SEPARATOR;
+        $prodName = trim($zxProdRecord->title) ?: 'UnnamedProd';
+
+        return $platform . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $letter . DIRECTORY_SEPARATOR . $prodName . DIRECTORY_SEPARATOR;
     }
 }
