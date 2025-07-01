@@ -9,10 +9,10 @@ use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class ZxArtApiProdsRequester
 {
-//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc';
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
-//    private const PAGE_SIZE = 1000;
-    private const PAGE_SIZE = 10;
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc';
+    private const PAGE_SIZE = 1000;
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
+//    private const PAGE_SIZE = 10;
 
     public function __construct(
         private Client $client = new Client()
@@ -30,7 +30,7 @@ final readonly class ZxArtApiProdsRequester
         $fetched = 0;
         $total = null;
         $debugLimit = null;
-        $debugLimit = 10;
+        $debugLimit = 1000;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;

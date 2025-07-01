@@ -55,7 +55,7 @@ final readonly class ZxReleaseFilesChecker
                 $duplicateIndex++;
             } while ($this->filesRepository->existsFileName($tosecName));
 
-            $relativePath = $this->fileDirectoryResolver->resolve($prod, $release, $tosecName);
+            $relativePath = $this->fileDirectoryResolver->resolve($prod, $release);
             $this->fileArchiveService->checkPath($relativePath);
             $filePath = $relativePath . $tosecName;
 

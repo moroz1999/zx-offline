@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Archive;
 
 use App\Files\FileRecord;
-use App\Utils\Transliterator;
 use App\ZxProds\ZxProdRecord;
 use App\ZxReleases\ZxReleaseRecord;
 use RuntimeException;
@@ -12,7 +11,7 @@ use RuntimeException;
 final class TosecNameResolver
 {
     public function __construct(
-        private readonly Transliterator           $transliterator,
+        private readonly NameSanitizer            $nameSanitizer,
         private readonly HardwarePlatformResolver $hardwarePlatformResolver,
     )
     {
@@ -36,8 +35,7 @@ final class TosecNameResolver
     {
         $baseName = $this->buildBaseName($prod, $release, $allFiles, $fileDto);
         $dumpFlag = $this->buildDumpFlag($prod, $release, $duplicateIndex);
-        $ext = strtolower($fileDto->type);
-
+        $ext = pathinfo($fileDto->fileName, PATHINFO_EXTENSION);
         return $baseName . $dumpFlag . '.' . $ext;
     }
 
@@ -92,7 +90,7 @@ final class TosecNameResolver
         }
 
         if ($release->publishers) {
-            $sub[] = $release->publishers;
+            $sub[] = $this->nameSanitizer->sanitize($release->publishers);
         }
 
         $roleBasedFlags = [
@@ -136,12 +134,7 @@ final class TosecNameResolver
 
     private function makeTitle(string $title): string
     {
-        $title = $this->transliterator->transliterate($title);
-        $title = trim(preg_replace('/[\/\\\\:*?"<>|]/', '', $title));
-        if (preg_match('/^(The|A|Le|La|Les|Die|De)\s+(.*)$/i', $title, $m)) {
-            return "$m[2], $m[1] ";
-        }
-        return $title . ' ';
+        return $this->nameSanitizer->sanitizeWithArticleHandling($title) . ' ';
     }
 
     private function makeProdYear(ZxProdRecord $prod): string
@@ -152,7 +145,7 @@ final class TosecNameResolver
     private function makePublisher(ZxProdRecord $prod): string
     {
         $publisher = trim($prod->publishers ?: '-');
-        return "($publisher)";
+        return '(' . $this->nameSanitizer->sanitize($publisher) . ')';
     }
 
     private function makeLanguages(ZxProdRecord $prod, ZxReleaseRecord $release): ?string
