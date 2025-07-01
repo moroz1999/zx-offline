@@ -21,5 +21,5 @@ This project is a backend processor for organizing and maintaining a structured 
 
 ## CLI Usage
 
-php ./cli.php reset - Resets and reinitializes the database.
-php ./cli.php update - Starts synchronization and archive update from ZXArt API.
+- php ./cli.php reset - Resets and reinitializes the database.
+- php ./cli.php update - Starts synchronization and archive update from ZXArt API.
