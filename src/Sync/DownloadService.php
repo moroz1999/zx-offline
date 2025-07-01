@@ -10,8 +10,8 @@ use RuntimeException;
 
 final readonly class DownloadService
 {
-    private const RETRY_LIMIT = 2;
-    private const RETRY_DELAY_SEC = 1;
+    private const RETRY_LIMIT = 5;
+    private const RETRY_DELAY_SEC = 3;
 
     public function __construct(
         private Client          $client,
@@ -64,7 +64,7 @@ final readonly class DownloadService
 
             } catch (GuzzleException|RuntimeException $e) {
                 $attempt++;
-                $this->logger->warning("Download failed (attempt $attempt): {$e->getMessage()}");
+                $this->logger->warning("Download failed (attempt $attempt, $url): {$e->getMessage()}");
 
                 if ($attempt > self::RETRY_LIMIT) {
                     throw new RuntimeException("Failed to download file after {$attempt} attempts", 0, $e);

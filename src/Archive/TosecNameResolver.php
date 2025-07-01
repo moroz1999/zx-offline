@@ -35,7 +35,7 @@ final class TosecNameResolver
     {
         $baseName = $this->buildBaseName($prod, $release, $allFiles, $fileDto);
         $dumpFlag = $this->buildDumpFlag($prod, $release, $duplicateIndex);
-        $ext = pathinfo($fileDto->fileName, PATHINFO_EXTENSION);
+        $ext = strtolower(pathinfo($fileDto->originalFileName, PATHINFO_EXTENSION));
         return $baseName . $dumpFlag . '.' . $ext;
     }
 

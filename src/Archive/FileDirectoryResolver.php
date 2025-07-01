@@ -20,7 +20,7 @@ final readonly class FileDirectoryResolver
         $platform = $this->hardwarePlatformResolver->resolvePlatformFolder($release);
         $category = $zxProdRecord->categoryTitle ?: 'Misc';
 
-        $titleSanitized = $this->nameSanitizer->sanitize($zxProdRecord->title);
+        $titleSanitized = $this->nameSanitizer->sanitizeWithArticleHandling($zxProdRecord->title);
         $firstChar = mb_strtoupper(mb_substr($titleSanitized, 0, 1));
 
         if (preg_match('/[A-Z]/', $firstChar)) {
