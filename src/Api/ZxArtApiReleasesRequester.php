@@ -29,7 +29,7 @@ final readonly class ZxArtApiReleasesRequester
         $fetched = 0;
         $total = null;
         $debugLimit = null;
-        $debugLimit = 10000;
+        $debugLimit = 1000;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;

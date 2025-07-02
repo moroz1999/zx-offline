@@ -10,6 +10,7 @@ use App\Tasks\TasksRepository;
 use App\Tasks\TaskTypes;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\ArrayInput;
+use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
@@ -19,7 +20,7 @@ class UpdateCommand extends Command
 
     public function __construct(
         private readonly TasksRepository $tasksService,
-        private readonly LoggerHolder    $loggerHolder
+        private readonly LoggerHolder $loggerHolder
     )
     {
         parent::__construct();
@@ -29,6 +30,7 @@ class UpdateCommand extends Command
     {
         $this
             ->setName('update')
+            ->addArgument('force', InputArgument::OPTIONAL, 'Force update check', false)
             ->setDescription('Start synchronization with ZX-Art');
     }
 
@@ -37,6 +39,13 @@ class UpdateCommand extends Command
         $io = new SymfonyStyle($input, $output);
         $logger = new IoLogger($io);
         $this->loggerHolder->setIoLogger($logger);
+
+        $io->section('Adding check_files task...');
+        try {
+            $this->tasksService->addTask(TaskTypes::check_failed_files, null);
+        } catch (TaskException $e) {
+            $this->loggerHolder->error($e->getMessage());;
+        }
 
         $io->section('Adding sync_prods task...');
         try {

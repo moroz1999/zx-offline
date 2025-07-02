@@ -12,6 +12,7 @@ use App\Tasks\TasksRepository;
 use App\Tasks\TaskStatuses;
 use App\Tasks\TaskTypes;
 use App\ZxReleases\ZxReleaseException;
+use Throwable;
 
 readonly class TaskRunner
 {
@@ -35,6 +36,7 @@ readonly class TaskRunner
 
             $this->tasksService->updateTask($task->id, TaskStatuses::in_progress);
             match ($task->type) {
+                TaskTypes::check_failed_files->name => $this->runCheckFailedFiles(),
                 TaskTypes::check_release_files->name => $this->runCheckReleaseFiles((int)$task->targetId),
                 TaskTypes::sync_prods->name => $this->runSyncProds(),
                 TaskTypes::sync_releases->name => $this->runSyncReleases(),
@@ -45,8 +47,8 @@ readonly class TaskRunner
             };
             $this->tasksService->updateTask($taskId, TaskStatuses::done);
             return $task;
-        } catch (TaskException $e) {
-            throw new TaskRunnerException("Task running $taskId not found:" . $e->getMessage());
+        } catch (Throwable $e) {
+            throw new TaskRunnerException("Task $taskId failed: " . $e->getMessage());
         }
     }
 
@@ -94,5 +96,9 @@ readonly class TaskRunner
     private function runDeleteReleaseFile(int $fileId): void
     {
         $this->zxReleasesSyncService->deleteReleaseFile($fileId);
+    }
+    private function runCheckFailedFiles(): void
+    {
+        $this->zxReleasesSyncService->retryFailedFiles();
     }
 }

@@ -75,13 +75,22 @@ final class HardwarePlatformResolver
             $result[] = 'ULAPlus';
         }
         if ($this->isKempston8b($hardware)) {
-            $result[] = 'KM8B';
+            $result[] = 'KJ8b';
         }
         if ($this->is128k($hardware)) {
             $result[] = '128K';
         }
         if ($this->isPlusD($hardware)) {
             $result[] = '+D';
+        }
+        if ($this->isGmx($hardware)) {
+            $result[] = 'GMX';
+        }
+        if ($this->isTurboSound($hardware)) {
+            $result[] = 'TS';
+        }
+        if ($this->isKMouse($hardware)) {
+            $result[] = 'KM';
         }
 
         return $result ? '(' . implode(', ', $result) . ')' : '';
@@ -114,6 +123,21 @@ final class HardwarePlatformResolver
     private function isPlusD(array $hardware): bool
     {
         return in_array('opd', $hardware, true);
+    }
+
+    private function isGmx(array $hardware): bool
+    {
+        return in_array('gmx', $hardware, true);
+    }
+
+    private function isTurboSound(array $hardware): bool
+    {
+        return in_array('ts', $hardware, true);
+    }
+
+    private function isKMouse(array $hardware): bool
+    {
+        return in_array('kempstonmouse', $hardware, true);
     }
 
     private function hasHardwareFlag(array $flags, ZxProdRecord $prod, ZxReleaseRecord $release): bool

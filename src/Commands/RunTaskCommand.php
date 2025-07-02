@@ -42,7 +42,7 @@ final class RunTaskCommand extends Command
             $this->loggerHolder->debug("$task->id $task->type" . ($task->targetId ? ", $task->targetId" : "") . " executed successfully.");
             return Command::SUCCESS;
         } catch (Throwable $e) {
-            $this->loggerHolder->debug("<error>Error: {$e->getMessage()} {$e->getTraceAsString()}</error>");
+            $this->loggerHolder->error("<error>Error: {$e->getMessage()} {$e->getTraceAsString()}</error>");
             return Command::FAILURE;
         }
     }

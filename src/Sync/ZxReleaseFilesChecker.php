@@ -27,6 +27,11 @@ final readonly class ZxReleaseFilesChecker
     {
     }
 
+    public function retryFailedFiles(): void
+    {
+
+    }
+
     public function syncReleaseFiles(int $id): void
     {
         $release = $this->releasesRepository->getById($id);
@@ -37,7 +42,7 @@ final readonly class ZxReleaseFilesChecker
 
         $prod = $this->prodsRepository->getById($release->prodId);
         if (!$prod) {
-            $this->logger->warning("Prod {$release->prodId} not found");
+            $this->logger->warning("Prod $release->prodId not found");
             return;
         }
 
@@ -60,12 +65,13 @@ final readonly class ZxReleaseFilesChecker
             $filePath = $relativePath . $tosecName;
 
             $fileId = $fileDto->id;
-            $archivePath = $this->fileArchiveService->getArchiveBasePath() . $filePath;
+            $targetPath = $this->fileArchiveService->getArchiveBasePath() . $filePath;
 
             if (!$this->fileArchiveService->fileExists($fileDto)) {
                 $this->logger->debug("File $fileId (Prod $prod->id \"$prod->title\" / Release $release->id \"$release->title\") is missing, downloading");
                 $zxArtUrl = "https://zxart.ee/zxfile/id:$release->id/fileId:$fileId/";
-                $this->downloadService->downloadFile($zxArtUrl, $archivePath, $fileDto->md5);
+
+                $this->downloadService->downloadFile($zxArtUrl, $targetPath, $fileDto->md5);
             }
 
             $existingFile = $existingMap[$fileId];
@@ -82,7 +88,7 @@ final readonly class ZxReleaseFilesChecker
 
                 if ($existingFile->filePath !== null) {
                     $this->fileArchiveService->renameFile($existingFile, $filePath);
-                    $this->logger->info("File {$existingFile->id} renamed: '{$existingFile->filePath}' -> '{$tosecName}'");
+                    $this->logger->info("File $existingFile->id renamed: '$existingFile->filePath' -> '$tosecName'");
                 }
 
                 $this->filesRepository->update($updated);
@@ -91,5 +97,6 @@ final readonly class ZxReleaseFilesChecker
             unset($existingMap[$fileId]);
         }
     }
+
 
 }

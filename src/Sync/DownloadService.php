@@ -20,6 +20,9 @@ final readonly class DownloadService
     {
     }
 
+    /**
+     * @throws DownloadFatalException|DownloadFailedException
+     */
     public function downloadFile(string $url, string $targetPath, ?string $expectedMd5 = null): void
     {
         $attempt = 0;
@@ -27,6 +30,10 @@ final readonly class DownloadService
         while (true) {
             try {
                 $this->logger->info("Downloading: $url");
+
+                if (file_exists($targetPath)) {
+                    throw new DownloadFatalException("File already exists: $targetPath");
+                }
 
                 $response = $this->client->get($url, [
                     'stream' => true,
@@ -37,7 +44,7 @@ final readonly class DownloadService
                 $target = fopen($targetPath, 'wb');
 
                 if (!$target) {
-                    throw new RuntimeException("Cannot open target file: $targetPath");
+                    throw new DownloadFatalException("Cannot open target file: $targetPath");
                 }
 
                 $written = 0;
@@ -49,13 +56,13 @@ final readonly class DownloadService
                 fclose($target);
 
                 if ($written === 0) {
-                    throw new RuntimeException("Downloaded file size is zero: $targetPath");
+                    throw new DownloadFatalException("Downloaded file size is zero: $targetPath");
                 }
 
                 if ($expectedMd5 !== null) {
                     $actualMd5 = md5_file($targetPath);
                     if ($actualMd5 !== strtolower($expectedMd5)) {
-                        throw new RuntimeException("MD5 mismatch: expected $expectedMd5, got $actualMd5");
+                        throw new DownloadFatalException("MD5 mismatch: expected $expectedMd5, got $actualMd5");
                     }
                 }
 
@@ -67,7 +74,7 @@ final readonly class DownloadService
                 $this->logger->warning("Download failed (attempt $attempt, $url): {$e->getMessage()}");
 
                 if ($attempt > self::RETRY_LIMIT) {
-                    throw new RuntimeException("Failed to download file after {$attempt} attempts", 0, $e);
+                    throw new DownloadFailedException("Failed to download file after $attempt attempts", 0, $e);
                 }
 
                 sleep(self::RETRY_DELAY_SEC);

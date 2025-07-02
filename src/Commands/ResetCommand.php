@@ -16,7 +16,7 @@ class ResetCommand extends Command
 {
     public function __construct(
         private readonly SchemaService $schemaService,
-        private readonly LoggerHolder  $loggerHolder
+        private readonly LoggerHolder $loggerHolder
     )
     {
         parent::__construct();
