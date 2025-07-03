@@ -11,6 +11,6 @@ enum TaskTypes
     case delete_release_file;
     case delete_release;
     case delete_prod;
-//    case check_release;
+    case retry_file;
     case check_release_files;
 }

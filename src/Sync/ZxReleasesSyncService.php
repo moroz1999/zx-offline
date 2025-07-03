@@ -153,4 +153,13 @@ final readonly class ZxReleasesSyncService
 
         $this->logger->info("File $file->id $file->filePath deleted");
     }
+
+    public function retryFailedFiles(): void
+    {
+        $files = $this->filesRepository->getWithEmptyPath();
+        foreach ($files as $file) {
+            $this->tasks->addTask(TaskTypes::retry_file, (string)$file->id);
+        }
+
+    }
 }

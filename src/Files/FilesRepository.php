@@ -110,4 +110,21 @@ final readonly class FilesRepository
             ->executeQuery()
             ->fetchOne();
     }
+
+    /**
+     * @return FileRecord[]
+     */
+    public function getWithEmptyPath(): array
+    {
+        $rows = $this->db->createQueryBuilder()
+            ->select('*')
+            ->from(Tables::files->name)
+            ->where('file_path IS NULL')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        return array_map(fn($row) => $this->createDtoFromRow($row), $rows);
+    }
+
+
 }

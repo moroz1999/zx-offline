@@ -31,8 +31,13 @@ final readonly class DownloadService
             try {
                 $this->logger->info("Downloading: $url");
 
-                if (file_exists($targetPath)) {
-                    throw new DownloadFatalException("File already exists: $targetPath");
+                if (file_exists($targetPath) && $expectedMd5 !== null) {
+                    $actualMd5 = md5_file($targetPath);
+                    if ($actualMd5 !== $expectedMd5) {
+                        unlink($targetPath);
+                    } else {
+                        return;
+                    }
                 }
 
                 $response = $this->client->get($url, [
@@ -61,7 +66,7 @@ final readonly class DownloadService
 
                 if ($expectedMd5 !== null) {
                     $actualMd5 = md5_file($targetPath);
-                    if ($actualMd5 !== strtolower($expectedMd5)) {
+                    if ($actualMd5 !== $expectedMd5) {
                         throw new DownloadFatalException("MD5 mismatch: expected $expectedMd5, got $actualMd5");
                     }
                 }

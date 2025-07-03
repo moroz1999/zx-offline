@@ -36,6 +36,7 @@ readonly class TaskRunner
 
             $this->tasksService->updateTask($task->id, TaskStatuses::in_progress);
             match ($task->type) {
+                TaskTypes::retry_file->name => $this->retryFile((int)$task->targetId),
                 TaskTypes::check_failed_files->name => $this->runCheckFailedFiles(),
                 TaskTypes::check_release_files->name => $this->runCheckReleaseFiles((int)$task->targetId),
                 TaskTypes::sync_prods->name => $this->runSyncProds(),
@@ -88,6 +89,11 @@ readonly class TaskRunner
         $this->zxReleaseFilesChecker->syncReleaseFiles($zxReleaseId);
     }
 
+    private function retryFile(int $fileId): void
+    {
+        $this->zxReleaseFilesChecker->retryFile($fileId);
+    }
+
     private function runDeleteRelease(int $zxReleaseId): void
     {
         $this->zxReleasesSyncService->deleteRelease($zxReleaseId);
@@ -97,6 +103,7 @@ readonly class TaskRunner
     {
         $this->zxReleasesSyncService->deleteReleaseFile($fileId);
     }
+
     private function runCheckFailedFiles(): void
     {
         $this->zxReleasesSyncService->retryFailedFiles();
