@@ -50,7 +50,7 @@ final class TosecNameResolver
 
         $parts[] = $this->makeTitle($prod->title);
         if ($release->version) {
-            $parts[] = 'v' . $release->version;
+            $parts[] = $this->nameSanitizer->sanitize($release->version);
         }
         if ($release->releaseType === 'demoversion') {
             $parts[] = '(demo)';

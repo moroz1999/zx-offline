@@ -12,11 +12,11 @@ final class FileArchiveService
         private string $archiveBasePath,
     )
     {
-        $this->archiveBasePath = realpath($this->archiveBasePath);
-        $this->archiveBasePath = rtrim($this->archiveBasePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
         if (!is_dir($this->archiveBasePath)) {
             mkdir($this->archiveBasePath, 0777, true);
         }
+        $this->archiveBasePath = realpath($this->archiveBasePath);
+        $this->archiveBasePath = rtrim($this->archiveBasePath, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR;
     }
 
     public function checkPath(string $path): void

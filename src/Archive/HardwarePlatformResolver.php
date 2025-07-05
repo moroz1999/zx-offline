@@ -12,8 +12,11 @@ final class HardwarePlatformResolver
         'ZX Spectrum' => [
             'zx48', 'zx16', 'zx128', 'zx128+2', 'zx128+2b', 'zx128+3',
             'timex2048', 'timex2068', 'pentagon128', 'pentagon512', 'pentagon1024', 'pentagon2666',
-            'profi', 'scorpion', 'scorpion1024', 'byte', 'zxmphoenix', 'zxuno',
+            'profi', 'scorpion', 'scorpion1024', 'byte', 'zxmphoenix',
             'alf', 'didaktik80',
+        ],
+        'ZX-Uno' => [
+            'zxuno',
         ],
         'Sprinter' => [
             'sprinter',

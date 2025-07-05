@@ -9,9 +9,10 @@ use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class ZxArtApiReleasesRequester
 {
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc';
     private const PAGE_SIZE = 1000;
-    //private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zx811';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=416165';
 
     public function __construct(
         private Client $client = new Client()
@@ -51,7 +52,7 @@ final readonly class ZxArtApiReleasesRequester
             foreach ($releases as $item) {
                 $fetched++;
                 $files = [];
-                foreach ($item['playableFiles'] ?? [] as $file) {
+                foreach ($item['archiveFiles'] ?? [] as $file) {
                     $files[] = new FileApiDto(
                         id: (int)$file['id'],
                         md5: $file['md5'],

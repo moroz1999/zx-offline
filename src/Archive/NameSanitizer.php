@@ -15,8 +15,7 @@ final class NameSanitizer
     public function sanitize(string $raw): string
     {
         $raw = $this->transliterator->transliterate($raw);
-        $raw = trim(preg_replace('/[\/\\\\:*?"<>|]/', '', $raw));
-        return $raw;
+        return trim(preg_replace('#[\/\\\\:*?"<>|]#', '', $raw));
     }
 
     public function sanitizeWithArticleHandling(string $raw): string

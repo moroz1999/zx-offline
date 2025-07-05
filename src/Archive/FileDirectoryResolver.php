@@ -15,12 +15,12 @@ final readonly class FileDirectoryResolver
     {
     }
 
-    public function resolve(ZxProdRecord $zxProdRecord, ZxReleaseRecord $release): string
+    public function resolve(ZxProdRecord $prod, ZxReleaseRecord $release): string
     {
         $platform = $this->hardwarePlatformResolver->resolvePlatformFolder($release);
-        $category = $zxProdRecord->categoryTitle ?: 'Misc';
+        $category = $prod->categoryTitle ?: 'Misc';
 
-        $titleSanitized = $this->nameSanitizer->sanitizeWithArticleHandling($zxProdRecord->title);
+        $titleSanitized = $this->nameSanitizer->sanitizeWithArticleHandling($prod->title);
         $firstChar = mb_strtoupper(mb_substr($titleSanitized, 0, 1));
 
         if (preg_match('/[A-Z]/', $firstChar)) {
@@ -32,7 +32,8 @@ final readonly class FileDirectoryResolver
         }
 
         $prodName = $titleSanitized ?: 'UnnamedProd';
+        $folderName = rtrim($prodName, '.');
 
-        return $platform . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $letter . DIRECTORY_SEPARATOR . $prodName . DIRECTORY_SEPARATOR;
+        return $platform . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $letter . DIRECTORY_SEPARATOR . $folderName . DIRECTORY_SEPARATOR;
     }
 }
