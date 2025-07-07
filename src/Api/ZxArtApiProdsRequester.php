@@ -10,8 +10,8 @@ use GuzzleHttp\Exception\GuzzleException;
 final readonly class ZxArtApiProdsRequester
 {
 //    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc';
-    private const PAGE_SIZE = 5000;
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zx811';
+    private const PAGE_SIZE = 1000;
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=tsconf';
 //    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=416165';
 //    private const PAGE_SIZE = 10;
 
@@ -31,7 +31,7 @@ final readonly class ZxArtApiProdsRequester
         $fetched = 0;
         $total = null;
         $debugLimit = null;
-        $debugLimit = 1000;
+//        $debugLimit = 1000;
 
         do {
             $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
@@ -59,14 +59,17 @@ final readonly class ZxArtApiProdsRequester
                         title: $cat['title'],
                     );
                 }
+                $groups = array_map(static fn(array $group) => $group['title'], $item['groupsInfo'] ?? []);
                 $publishers = array_map(static fn(array $publisher) => $publisher['title'], $item['publishersInfo'] ?? []);
+
+                $dtoPublishers = $publishers === [] ? $groups : [];
 
                 yield new ZxProdApiDto(
                     id: (int)$item['id'],
                     title: $item['title'],
                     dateModified: (int)$item['dateModified'],
                     languages: isset($item['language']) ? implode(', ', $item['language']) : null,
-                    publishers: $publishers !== [] ? implode(', ', $publishers) : null,
+                    publishers: $dtoPublishers !== [] ? implode(', ', $dtoPublishers) : null,
                     year: isset($item['year']) ? (int)$item['year'] : null,
                     legalStatus: $item['legalStatus'] ?? null,
                     categories: $categories,
