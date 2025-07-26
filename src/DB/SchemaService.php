@@ -34,6 +34,7 @@ readonly class SchemaService
     {
         try {
             $this->dropTable(Tables::files);
+            $this->dropTable(Tables::file_paths);
             $this->dropTable(Tables::zx_releases);
             $this->dropTable(Tables::zx_prods);
             $this->dropTable(Tables::tasks);
@@ -63,6 +64,7 @@ readonly class SchemaService
             $this->checkProdsTable();
             $this->checkReleasesTable();
             $this->checkFilesTable();
+            $this->checkFilePathsTable();
         } catch (Exception $e) {
             throw new SchemaException("Error creating database schema: {$e->getMessage()}");
         }
@@ -161,6 +163,24 @@ readonly class SchemaService
 
             $this->executeSchema($schema);
             $this->logger->info('Files table created.');
+        }
+    }
+
+    private function checkFilePathsTable(): void
+    {
+        if (!$this->sm->tableExists(Tables::file_paths->name)) {
+            $schema = new Schema();
+            $files = $schema->createTable(Tables::file_paths->name);
+
+            $files->addColumn('id', 'guid');
+            $files->addColumn('file_id', 'integer');
+            $files->addColumn('file_path', 'string');
+
+            $files->setPrimaryKey(['id']);
+            $files->addIndex(['file_id'], 'idx_file');
+
+            $this->executeSchema($schema);
+            $this->logger->info('File paths table created.');
         }
     }
 

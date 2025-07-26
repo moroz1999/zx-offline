@@ -29,40 +29,53 @@ final class FileArchiveService
 
     public function deleteFile(FileRecord $file): void
     {
-        if ($file->filePath === null) {
-            return;
-        }
-        $filePath = $this->getFilePath($file);
-        if (is_file($filePath)) {
-            unlink($filePath);
+        $filePaths = $this->getFilePaths($file);
+        foreach ($filePaths as $filePath) {
+            if (is_file($filePath)) {
+                unlink($filePath);
+
+                $dir = dirname($filePath);
+                if (is_dir($dir) && $this->isDirEmpty($dir)) {
+                    rmdir($dir);
+                }
+            }
         }
     }
 
+    private function isDirEmpty(string $dir): bool
+    {
+        return is_readable($dir) && count(scandir($dir)) === 2;
+    }
+
+
     public function renameFile(FileRecord $file, string $newFileName): void
     {
-        $currentFilePath = $this->getFilePath($file);
+        $currentFilePaths = $this->getFilePaths($file);
         $newFullPath = $this->archiveBasePath . $newFileName;
-
-        if (is_file($currentFilePath)) {
-            rename($currentFilePath, $newFullPath);
+        foreach ($currentFilePaths as $currentFilePath) {
+            if (is_file($currentFilePath)) {
+                rename($currentFilePath, $newFullPath);
+            }
         }
     }
 
     public function fileExists(FileRecord $file): bool
     {
-        if ($file->filePath === null) {
+        if ($file->getFilePaths() === []) {
             return false;
         }
-        $filePath = $this->getFilePath($file);
-        return is_file($filePath);
+        $filePaths = $this->getFilePaths($file);
+        foreach ($filePaths as $filePath) {
+            if (!is_file($filePath)) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    public function getFilePath(FileRecord $file): ?string
+    public function getFilePaths(FileRecord $file): ?array
     {
-        if ($file->filePath === null) {
-            return null;
-        }
-        return $this->archiveBasePath . $file->filePath;
+        return array_map(fn($filePath) => $this->archiveBasePath . $filePath, $file->getFilePaths());
     }
 
     public function getArchiveBasePath(): string

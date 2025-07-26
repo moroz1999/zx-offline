@@ -8,4 +8,5 @@ enum Tables
     case zx_prods;
     case zx_releases;
     case files;
+    case file_paths;
 }

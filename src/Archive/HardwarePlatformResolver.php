@@ -47,19 +47,22 @@ final class HardwarePlatformResolver
         ],
     ];
 
-    public function resolvePlatformFolder(ZxReleaseRecord $release): string
+    /**
+     * @return string[]
+     */
+    public function resolvePlatformFolders(ZxReleaseRecord $release): array
     {
         $hw = $release->hardware ?? [];
 
+        $folders = [];
         foreach (self::PLATFORM_MAP as $platform => $hardwareSet) {
             foreach ($hw as $flag) {
                 if (in_array($flag, $hardwareSet, true)) {
-                    return $platform;
+                    $folders[] = $platform;
                 }
             }
         }
-
-        return 'ZX Spectrum';
+        return $folders === [] ? ['ZX Spectrum'] : $folders;
     }
 
     public function getAdditionalHardwareString(ZxReleaseRecord $release): string

@@ -99,7 +99,7 @@ final readonly class ZxReleasesSyncService
                 type: $fileDto->type,
                 originalFileName: $fileDto->fileName,
                 fileName: null,
-                filePath: null,
+                filePaths: [],
             );
 
             if (!isset($existingMap[$newFile->id])) {
@@ -151,7 +151,7 @@ final readonly class ZxReleasesSyncService
         $this->fileArchiveService->deleteFile($file);
         $this->filesRepository->delete($fileId);
 
-        $this->logger->info("File $file->id $file->filePath deleted");
+        $this->logger->info("File $file->id $file->fileName deleted");
     }
 
     public function retryFailedFiles(): void

@@ -11,8 +11,8 @@ final readonly class ZxArtApiProdsRequester
 {
 //    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc';
     private const PAGE_SIZE = 1000;
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=tsconf';
-//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=416165';
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zxnext';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=271923';
 //    private const PAGE_SIZE = 10;
 
     public function __construct(

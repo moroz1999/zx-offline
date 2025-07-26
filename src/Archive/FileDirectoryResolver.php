@@ -15,9 +15,12 @@ final readonly class FileDirectoryResolver
     {
     }
 
-    public function resolve(ZxProdRecord $prod, ZxReleaseRecord $release): string
+    /**
+     * @return string[]
+     */
+    public function resolve(ZxProdRecord $prod, ZxReleaseRecord $release): array
     {
-        $platform = $this->hardwarePlatformResolver->resolvePlatformFolder($release);
+        $platforms = $this->hardwarePlatformResolver->resolvePlatformFolders($release);
         $category = $prod->categoryTitle ?: 'Misc';
 
         $titleSanitized = $this->nameSanitizer->sanitizeWithArticleHandling($prod->title);
@@ -34,6 +37,6 @@ final readonly class FileDirectoryResolver
         $prodName = $titleSanitized ?: 'UnnamedProd';
         $folderName = rtrim($prodName, '.');
 
-        return $platform . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $letter . DIRECTORY_SEPARATOR . $folderName . DIRECTORY_SEPARATOR;
+        return array_map(static fn($platform) => $platform . DIRECTORY_SEPARATOR . $category . DIRECTORY_SEPARATOR . $letter . DIRECTORY_SEPARATOR . $folderName . DIRECTORY_SEPARATOR, $platforms);
     }
 }

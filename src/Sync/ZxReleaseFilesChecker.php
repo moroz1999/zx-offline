@@ -6,6 +6,7 @@ namespace App\Sync;
 use App\Archive\FileArchiveService;
 use App\Archive\FileDirectoryResolver;
 use App\Archive\TosecNameResolver;
+use App\Files\FilePathRecord;
 use App\Files\FileRecord;
 use App\Files\FilesRepository;
 use App\ZxProds\ZxProdRecord;
@@ -13,6 +14,7 @@ use App\ZxProds\ZxProdsRepository;
 use App\ZxReleases\ZxReleaseRecord;
 use App\ZxReleases\ZxReleasesRepository;
 use Psr\Log\LoggerInterface;
+use Ramsey\Uuid\Uuid;
 
 final readonly class ZxReleaseFilesChecker
 {
@@ -68,10 +70,10 @@ final readonly class ZxReleaseFilesChecker
             return;
         }
 
-        $fileDtos = $this->filesRepository->getByReleaseId($release->id);
+        $fileRecords = $this->filesRepository->getByReleaseId($release->id);
 
-        foreach ($fileDtos as $fileDto) {
-            $this->syncOneFile($fileDto, $prod, $release, $fileDtos);
+        foreach ($fileRecords as $fileRecord) {
+            $this->syncOneFile($fileRecord, $prod, $release, $fileRecords);
         }
     }
 
@@ -95,36 +97,51 @@ final readonly class ZxReleaseFilesChecker
             $duplicateIndex++;
         } while ($this->filesRepository->existsFileName($tosecName));
 
-        $relativePath = $this->fileDirectoryResolver->resolve($prod, $release);
-        $this->fileArchiveService->checkPath($relativePath);
+        $relativePaths = $this->fileDirectoryResolver->resolve($prod, $release);
+        array_map(fn(string $path) => $this->fileArchiveService->checkPath($path), $relativePaths);
 
-        $filePath = $relativePath . $tosecName;
-        $targetPath = $this->fileArchiveService->getArchiveBasePath() . $filePath;
+        $filePaths = array_map(fn(string $path) => $path . $tosecName, $relativePaths);
+        $targetPaths = array_map(fn(string $filePath) => $this->fileArchiveService->getArchiveBasePath() . $filePath, $filePaths);
 
-        if (!$this->fileArchiveService->fileExists($fileRecord)) {
+        $needsDownload = !$this->fileArchiveService->fileExists($fileRecord);
+
+        if ($needsDownload) {
             $this->logger->debug("File {$fileRecord->id} (Prod $prod->id \"$prod->title\" / Release $release->id \"$release->title\") requires download");
 
             $zxArtUrl = "https://zxart.ee/zxfile/id:$release->id/fileId:$fileRecord->id/";
-            $this->downloadService->downloadFile($zxArtUrl, $targetPath, $fileRecord->md5);
+            $this->downloadService->downloadFile($zxArtUrl, $targetPaths, $fileRecord->md5);
         }
-        
-        if ($fileRecord->filePath !== $filePath) {
-            $updatedFileRecord = new FileRecord(
+
+        $newFilePaths = array_map(
+            static fn(string $path) => new FilePathRecord(
+                id: Uuid::uuid4(),
+                fileId: $fileRecord->id,
+                filePath: $path
+            ),
+            $filePaths
+        );
+
+        $currentPathStrings = array_map(fn($fp) => $fp->filePath, $fileRecord->filePaths);
+
+        if ($currentPathStrings !== $filePaths) {
+            foreach ($fileRecord->getFilePaths() as $oldPath) {
+                if ($oldPath->filePath !== null && !in_array($oldPath->filePath, $filePaths, true)) {
+                    $this->fileArchiveService->renameFile($fileRecord, $oldPath->filePath, $tosecName);
+                    $this->logger->info("File {$fileRecord->id} renamed: '{$oldPath->filePath}' -> '$tosecName'");
+                }
+            }
+
+            $updatedFile = new FileRecord(
                 id: $fileRecord->id,
                 zxReleaseId: $fileRecord->zxReleaseId,
                 md5: $fileRecord->md5,
                 type: $fileRecord->type,
                 originalFileName: $fileRecord->originalFileName,
                 fileName: $tosecName,
-                filePath: $filePath
+                filePaths: $newFilePaths
             );
 
-            if ($fileRecord->filePath !== null) {
-                $this->fileArchiveService->renameFile($fileRecord, $filePath);
-                $this->logger->info("File {$fileRecord->id} renamed: '{$fileRecord->filePath}' -> '$tosecName'");
-            }
-
-            $this->filesRepository->update($updatedFileRecord);
+            $this->filesRepository->update($updatedFile);
         }
     }
 }
