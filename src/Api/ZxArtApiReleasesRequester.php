@@ -9,9 +9,9 @@ use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class ZxArtApiReleasesRequester
 {
-//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc';
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc';
     private const PAGE_SIZE = 1000;
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zxnext';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zxnext';
 //    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxRelease/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=271923';
 
     public function __construct(
@@ -28,7 +28,7 @@ final readonly class ZxArtApiReleasesRequester
     {
         $start = 0;
         $fetched = 0;
-        $total = null;
+        $total = 0;
         $debugLimit = null;
 //        $debugLimit = 1000;
 
@@ -47,7 +47,9 @@ final readonly class ZxArtApiReleasesRequester
             }
 
             $releases = $data['responseData']['zxRelease'] ?? [];
-            $total ??= $data['totalAmount'] ?? null;
+            if ($total === 0 && !empty($data['totalAmount'])) {
+                $total = $data['totalAmount'];
+            }
 
             foreach ($releases as $item) {
                 $fetched++;
@@ -94,14 +96,12 @@ final readonly class ZxArtApiReleasesRequester
                     hardware: $item['hardwareRequired'] ?? null,
                     files: $files,
                 );
-
                 if ($fetched === $debugLimit) {
                     return;
                 }
             }
 
-
             $start += self::PAGE_SIZE;
-        } while ($total !== null && $fetched < $total);
+        } while ($start < $total && $total > 0);
     }
 }
