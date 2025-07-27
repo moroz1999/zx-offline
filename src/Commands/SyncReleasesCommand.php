@@ -15,7 +15,7 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
 
-class UpdateCommand extends Command
+class SyncReleasesCommand extends Command
 {
 
     public function __construct(
@@ -29,9 +29,8 @@ class UpdateCommand extends Command
     protected function configure(): void
     {
         $this
-            ->setName('update')
-            ->addArgument('force', InputArgument::OPTIONAL, 'Force update check', false)
-            ->setDescription('Start synchronization with ZX-Art');
+            ->setName('sync:releases')
+            ->setDescription('Syncronize releases with ZX-Art');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -42,14 +41,7 @@ class UpdateCommand extends Command
 
         $io->section('Adding check_files task...');
         try {
-            $this->tasksService->addTask(TaskTypes::check_failed_files, null);
-        } catch (TaskException $e) {
-            $this->loggerHolder->error($e->getMessage());;
-        }
-
-        $io->section('Adding sync_prods task...');
-        try {
-            $this->tasksService->addTask(TaskTypes::sync_prods, null);
+            $this->tasksService->addTask(TaskTypes::check_failed_files);
         } catch (TaskException $e) {
             $this->loggerHolder->error($e->getMessage());;
         }

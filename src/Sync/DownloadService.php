@@ -4,9 +4,11 @@ declare(strict_types=1);
 namespace App\Sync;
 
 use GuzzleHttp\Client;
+use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\GuzzleException;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Throwable;
 
 final readonly class DownloadService
 {
@@ -69,16 +71,29 @@ final readonly class DownloadService
                 $this->logger->info("Downloaded successfully: $targetPath");
                 return;
 
-            } catch (GuzzleException|RuntimeException $e) {
-                $this->logger->warning("Download failed (attempt $attempt): {$e->getMessage()}");
-
-                if ($attempt >= self::RETRY_LIMIT) {
-                    throw new DownloadFailedException("Failed to download file after $attempt attempts", 0, $e);
+            } catch (ClientException $e) {
+                if ($e->getResponse()?->getStatusCode() === 404) {
+                    $this->logger->error("Download failed with 404 Not Found: {$e->getMessage()}");
+                    throw new DownloadFatalException("404 Not Found: $url", 0, $e);
                 }
 
-                sleep(self::RETRY_DELAY_SEC);
+                $this->handleRetryableFailure($e, $attempt);
+
+            } catch (GuzzleException | RuntimeException $e) {
+                $this->handleRetryableFailure($e, $attempt);
             }
         }
+    }
+
+    private function handleRetryableFailure(Throwable $e, int $attempt): void
+    {
+        $this->logger->warning("Download failed (attempt $attempt): {$e->getMessage()}");
+
+        if ($attempt >= self::RETRY_LIMIT) {
+            throw new DownloadFailedException("Failed to download file after $attempt attempts", 0, $e);
+        }
+
+        sleep(self::RETRY_DELAY_SEC);
     }
 
     /**

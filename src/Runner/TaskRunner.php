@@ -49,6 +49,7 @@ readonly class TaskRunner
             $this->tasksService->updateTask($taskId, TaskStatuses::done);
             return $task;
         } catch (Throwable $e) {
+            $this->tasksService->updateTask($taskId, TaskStatuses::failed);
             throw new TaskRunnerException("Task $taskId failed: " . $e->getMessage());
         }
     }
