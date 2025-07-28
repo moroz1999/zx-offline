@@ -39,9 +39,9 @@ class SyncReleasesCommand extends Command
         $logger = new IoLogger($io);
         $this->loggerHolder->setIoLogger($logger);
 
-        $io->section('Adding check_files task...');
+        $io->section('Adding sync_releases task...');
         try {
-            $this->tasksService->addTask(TaskTypes::check_failed_files);
+            $this->tasksService->addTask(TaskTypes::sync_releases);
         } catch (TaskException $e) {
             $this->loggerHolder->error($e->getMessage());;
         }
