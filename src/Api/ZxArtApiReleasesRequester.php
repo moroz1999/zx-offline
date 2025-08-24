@@ -21,10 +21,37 @@ final readonly class ZxArtApiReleasesRequester
     }
 
     /**
+     * Fetch all releases from API
+     *
      * @return Generator<ZxReleaseApiDto>
      * @throws ZxArtApiException
      */
     public function getAll(): Generator
+    {
+        yield from $this->fetchReleases(self::BASE_URL);
+    }
+
+    /**
+     * Fetch releases by prodId from API
+     *
+     * @param int $prodId
+     * @return Generator<ZxReleaseApiDto>
+     * @throws ZxArtApiException
+     */
+    public function getByProdId(int $prodId): Generator
+    {
+        $url = self::BASE_URL . '/filter:zxProdId=' . $prodId;
+        yield from $this->fetchReleases($url);
+    }
+
+    /**
+     * Common low-level fetcher with paging and mapping to DTO
+     *
+     * @param string $baseUrl
+     * @return Generator<ZxReleaseApiDto>
+     * @throws ZxArtApiException
+     */
+    private function fetchReleases(string $baseUrl): Generator
     {
         $start = 0;
         $fetched = 0;
@@ -33,7 +60,7 @@ final readonly class ZxArtApiReleasesRequester
 //        $debugLimit = 1000;
 
         do {
-            $url = self::BASE_URL . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
+            $url = $baseUrl . '/limit:' . self::PAGE_SIZE . '/start:' . $start;
 
             try {
                 $response = $this->client->get($url);
@@ -66,6 +93,7 @@ final readonly class ZxArtApiReleasesRequester
                 if (empty($files)) {
                     continue;
                 }
+
                 $publisherNames = array_map(
                     static fn(array $publisher) => $publisher['title'],
                     $item['publishersInfo'] ?? []

@@ -8,8 +8,10 @@ use App\Api\ZxReleaseApiDto;
 use App\Archive\FileArchiveService;
 use App\Files\FileRecord;
 use App\Files\FilesRepository;
+use App\Tasks\TaskException;
 use App\Tasks\TasksRepository;
 use App\Tasks\TaskTypes;
+use App\ZxReleases\ZxReleaseException;
 use App\ZxReleases\ZxReleaseRecord;
 use App\ZxReleases\ZxReleasesRepository;
 use Psr\Log\LoggerInterface;
@@ -27,34 +29,84 @@ final readonly class ZxReleasesSyncService
     {
     }
 
+    /**
+     * @throws TaskException
+     * @throws ZxReleaseException
+     */
     public function sync(): void
     {
         $existingIds = array_flip($this->releasesRepository->getAllIds());
 
+        // Full sync: iterate over all releases from API
         foreach ($this->releasesApi->getAll() as $apiRelease) {
-            $record = $this->mapToRecord($apiRelease);
-            $existing = $this->releasesRepository->getById($record->id);
-            unset($existingIds[$record->id]);
-
-            if (!$existing) {
-                $this->createRelease($record);
-                $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
-                $this->logger->info("Release $record->id $record->title created");
-            } elseif ($record->dateModified > $existing->dateModified) {
-                $this->updateRelease($record);
-                $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
-                $this->logger->info("Release $record->id $record->title updated");
-            } else {
-                $this->logger->info("Release $record->id $record->title is not modified, skipped");
-            }
-
-            $this->syncFileRecords($record->id, $apiRelease->files);
+            $this->processApiRelease($apiRelease, $existingIds);
         }
 
+        // Remaining IDs are considered obsolete and should be deleted
         foreach (array_keys($existingIds) as $obsoleteId) {
             $this->tasks->addTask(TaskTypes::delete_release, (string)$obsoleteId);
             $this->logger->info("Release $obsoleteId deleted as removed from API");
         }
+    }
+
+    /**
+     * Partial sync by prodId.
+     * Only releases belonging to the given prodId are affected.
+     * Obsolete releases for this prodId are removed.
+     */
+    public function syncByProdId(int $id): void
+    {
+        // Current releases in DB for this prodId
+        $existingRecords = $this->releasesRepository->getByProdId($id);
+        $existingIds = array_flip(array_map(static fn(ZxReleaseRecord $r) => $r->id, $existingRecords));
+
+        // Actual releases from API for this prodId
+        // Assumes releasesApi has getByProdId(), otherwise filter getAll()
+        $apiReleases = $this->releasesApi->getByProdId($id);
+
+        foreach ($apiReleases as $apiRelease) {
+            $this->processApiRelease($apiRelease, $existingIds);
+        }
+
+        // Remove obsolete releases for this prodId
+        foreach (array_keys($existingIds) as $obsoleteId) {
+            $this->tasks->addTask(TaskTypes::delete_release, (string)$obsoleteId);
+            $this->logger->info("Release $obsoleteId deleted as removed from API for prodId $id");
+        }
+    }
+
+    /**
+     * Common processing logic for a single API release:
+     * - map DTO to record
+     * - create or update release
+     * - enqueue file check task
+     * - sync release files
+     * - mark id as processed (remove from $remainingIds)
+     *
+     * @param array<int,bool> $remainingIds map of existing DB ids still considered obsolete
+     * @throws ZxReleaseException
+     * @throws TaskException
+     */
+    private function processApiRelease(ZxReleaseApiDto $apiRelease, array &$remainingIds): void
+    {
+        $record = $this->mapToRecord($apiRelease);
+        unset($remainingIds[$record->id]);
+
+        $existing = $this->releasesRepository->getById($record->id);
+
+        if (!$existing) {
+            $this->createRelease($record);
+            $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
+            $this->logger->info("Release $record->id $record->title created");
+        } elseif ($record->dateModified > $existing->dateModified) {
+            $this->updateRelease($record);
+            $this->tasks->addTask(TaskTypes::check_release_files, (string)$record->id);
+            $this->logger->info("Release $record->id $record->title updated");
+        } else {
+            $this->logger->info("Release $record->id $record->title is not modified, skipped");
+        }
+
+        $this->syncFileRecords($record->id, $apiRelease->files);
     }
 
     private function mapToRecord(ZxReleaseApiDto $dto): ZxReleaseRecord
@@ -73,11 +125,17 @@ final readonly class ZxReleasesSyncService
         );
     }
 
+    /**
+     * @throws ZxReleaseException
+     */
     private function createRelease(ZxReleaseRecord $record): void
     {
         $this->releasesRepository->create($record);
     }
 
+    /**
+     * @throws ZxReleaseException
+     */
     private function updateRelease(ZxReleaseRecord $record): void
     {
         $this->releasesRepository->update($record);
@@ -121,18 +179,16 @@ final readonly class ZxReleasesSyncService
             unset($existingMap[$newFile->id]);
         }
 
+        // Remaining files are obsolete and should be deleted
         foreach (array_keys($existingMap) as $obsoleteFileId) {
             $this->deleteReleaseFile($obsoleteFileId);
-
             $this->logger->info("File $obsoleteFileId deleted as removed from API");
         }
     }
 
-    public function syncByProdId(int $id): void
-    {
-
-    }
-
+    /**
+     * @throws ZxReleaseException
+     */
     public function deleteRelease(int $releaseId): void
     {
         $files = $this->filesRepository->getByReleaseId($releaseId);
@@ -154,12 +210,14 @@ final readonly class ZxReleasesSyncService
         $this->logger->info("File $file->id $file->fileName deleted");
     }
 
+    /**
+     * @throws TaskException
+     */
     public function retryFailedFiles(): void
     {
         $files = $this->filesRepository->getWithEmptyPath();
         foreach ($files as $file) {
             $this->tasks->addTask(TaskTypes::retry_file, (string)$file->id);
         }
-
     }
 }
