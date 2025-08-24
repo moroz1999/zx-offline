@@ -9,7 +9,9 @@
     "doctrine/dbal": "^4.2",
     "doctrine/migrations": "^3.9",
     "monolog/monolog": "^3.9",
-    "ramsey/uuid": "^4.9"
+    "ramsey/uuid": "^4.9",
+    "ext-zip": "*",
+    "php": "^8.2"
   },
   "autoload": {
     "psr-4": {

@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Sync;
 
+use App\Archive\ArchiveExtractionService;
 use App\Archive\FileArchiveService;
 use App\Archive\FileDirectoryResolver;
 use App\Archive\TosecNameResolver;
@@ -19,14 +20,15 @@ use Ramsey\Uuid\Uuid;
 final readonly class ZxReleaseFilesChecker
 {
     public function __construct(
-        private FilesRepository       $filesRepository,
-        private ZxReleasesRepository  $releasesRepository,
-        private ZxProdsRepository     $prodsRepository,
-        private DownloadService       $downloadService,
-        private FileArchiveService    $fileArchiveService,
-        private TosecNameResolver     $tosecNameResolver,
-        private FileDirectoryResolver $fileDirectoryResolver,
-        private LoggerInterface       $logger,
+        private FilesRepository          $filesRepository,
+        private ZxReleasesRepository     $releasesRepository,
+        private ZxProdsRepository        $prodsRepository,
+        private DownloadService          $downloadService,
+        private FileArchiveService       $fileArchiveService,
+        private ArchiveExtractionService $archiveExtractionService,
+        private TosecNameResolver        $tosecNameResolver,
+        private FileDirectoryResolver    $fileDirectoryResolver,
+        private LoggerInterface          $logger,
     )
     {
     }
@@ -100,8 +102,10 @@ final readonly class ZxReleaseFilesChecker
         $relativePaths = $this->fileDirectoryResolver->resolve($prod, $release);
         array_map(fn(string $path) => $this->fileArchiveService->checkPath($path), $relativePaths);
 
-        $filePaths = array_map(fn(string $path) => $path . $tosecName, $relativePaths);
-        $targetPaths = array_map(fn(string $filePath) => $this->fileArchiveService->getArchiveBasePath() . $filePath, $filePaths);
+        $archiveBasePath = $this->fileArchiveService->getArchiveBasePath();
+        $filePaths = array_map(static fn(string $path) => $path . $tosecName, $relativePaths);
+        $targetPaths = array_map(fn(string $filePath) => $archiveBasePath . $filePath, $filePaths);
+
 
         $needsDownload = !$this->fileArchiveService->fileExists($fileRecord);
 
@@ -110,9 +114,12 @@ final readonly class ZxReleaseFilesChecker
 
             $zxArtUrl = "https://zxart.ee/zxfile/id:$release->id/fileId:$fileRecord->id/";
             $this->downloadService->downloadFile($zxArtUrl, $targetPaths, $fileRecord->md5);
+
+            // Try to extract each downloaded item if it is an archive; remove archive on success
+            $filePaths = array_map(fn(string $filePath) => $this->archiveExtractionService->extractAndRemove($archiveBasePath, $filePath), $filePaths);
         }
 
-        $newFilePaths = array_map(
+        $newFilePathRecords = array_map(
             static fn(string $path) => new FilePathRecord(
                 id: Uuid::uuid4(),
                 fileId: $fileRecord->id,
@@ -121,15 +128,11 @@ final readonly class ZxReleaseFilesChecker
             $filePaths
         );
 
-        $currentPathStrings = array_map(fn($fp) => $fp->filePath, $fileRecord->filePaths);
+        $currentPathStrings = array_map(static fn($fp) => $fp->filePath, $fileRecord->filePaths);
 
         if ($currentPathStrings !== $filePaths) {
-            foreach ($fileRecord->getFilePaths() as $oldPath) {
-                if ($oldPath->filePath !== null && !in_array($oldPath->filePath, $filePaths, true)) {
-                    $this->fileArchiveService->renameFile($fileRecord, $oldPath->filePath, $tosecName);
-                    $this->logger->info("File {$fileRecord->id} renamed: '{$oldPath->filePath}' -> '$tosecName'");
-                }
-            }
+            $this->fileArchiveService->renameFilePaths($fileRecord, $tosecName);
+            $this->logger->info("File {$fileRecord->id} renamed to '$tosecName'");
 
             $updatedFile = new FileRecord(
                 id: $fileRecord->id,
@@ -138,7 +141,7 @@ final readonly class ZxReleaseFilesChecker
                 type: $fileRecord->type,
                 originalFileName: $fileRecord->originalFileName,
                 fileName: $tosecName,
-                filePaths: $newFilePaths
+                filePaths: $newFilePathRecords
             );
 
             $this->filesRepository->update($updatedFile);
