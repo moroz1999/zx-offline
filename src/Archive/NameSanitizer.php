@@ -5,10 +5,10 @@ namespace App\Archive;
 
 use App\Utils\Transliterator;
 
-final class NameSanitizer
+final readonly class NameSanitizer
 {
     public function __construct(
-        private readonly Transliterator $transliterator,
+        private Transliterator $transliterator,
     ) {
     }
 

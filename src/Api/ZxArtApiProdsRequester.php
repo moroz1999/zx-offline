@@ -9,10 +9,10 @@ use GuzzleHttp\Exception\GuzzleException;
 
 final readonly class ZxArtApiProdsRequester
 {
-//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdNotStatus=insales';
+    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdNotStatus=insales';
     private const PAGE_SIZE = 1000;
-    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zxnext';
-//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=271923';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zxnext';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=309857';
 //    private const PAGE_SIZE = 10;
 
     public function __construct(
@@ -65,7 +65,7 @@ final readonly class ZxArtApiProdsRequester
                 $groups = array_map(static fn(array $group) => $group['title'], $item['groupsInfo'] ?? []);
                 $publishers = array_map(static fn(array $publisher) => $publisher['title'], $item['publishersInfo'] ?? []);
 
-                $dtoPublishers = $publishers === [] ? $groups : [];
+                $dtoPublishers = $publishers !== [] ? $publishers : $groups;
 
                 yield new ZxProdApiDto(
                     id: (int)$item['id'],

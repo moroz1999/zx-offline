@@ -6,6 +6,7 @@ namespace App\Sync;
 use App\Archive\ArchiveExtractionService;
 use App\Archive\FileArchiveService;
 use App\Archive\FileDirectoryResolver;
+use App\Archive\TosecNameFormatter;
 use App\Archive\TosecNameResolver;
 use App\Files\FilePathRecord;
 use App\Files\FileRecord;
@@ -27,6 +28,7 @@ final readonly class ZxReleaseFilesChecker
         private FileArchiveService       $fileArchiveService,
         private ArchiveExtractionService $archiveExtractionService,
         private TosecNameResolver        $tosecNameResolver,
+        private TosecNameFormatter       $tosecNameFormatter,
         private FileDirectoryResolver    $fileDirectoryResolver,
         private LoggerInterface          $logger,
     )
@@ -89,13 +91,14 @@ final readonly class ZxReleaseFilesChecker
         $duplicateIndex = 0;
 
         do {
-            $tosecName = $this->tosecNameResolver->generateTosecName(
+            $tosecDto = $this->tosecNameResolver->generateDto(
                 $prod,
                 $release,
                 $allFiles,
                 $fileRecord,
                 $duplicateIndex
             );
+            $tosecName = $this->tosecNameFormatter->toFilename($tosecDto);
             $duplicateIndex++;
         } while ($this->filesRepository->existsFileName($tosecName));
 
@@ -132,7 +135,9 @@ final readonly class ZxReleaseFilesChecker
 
         if ($currentPathStrings !== $filePaths) {
             $this->fileArchiveService->renameFilePaths($fileRecord, $tosecName);
-            $this->logger->info("File {$fileRecord->id} renamed to '$tosecName'");
+            if ($currentPathStrings !== []){
+                $this->logger->info("File {$fileRecord->id} renamed to '$tosecName'");
+            }
 
             $updatedFile = new FileRecord(
                 id: $fileRecord->id,

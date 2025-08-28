@@ -13,10 +13,10 @@ final class TosecNameResolver
     public function __construct(
         private readonly NameSanitizer            $nameSanitizer,
         private readonly HardwarePlatformResolver $hardwarePlatformResolver,
+        private readonly FilenameLanguageDetector $filenameLanguageDetector,
     )
     {
     }
-
 
     private const FORMAT_GROUPS = [
         'disk' => ['dsk', 'trd', 'scl', 'fdi', 'udi', 'td0', 'd80', 'mgt', 'opd', 'mbd', 'img'],
@@ -25,74 +25,81 @@ final class TosecNameResolver
         'snapshot' => ['sna', 'szx', 'dck', 'z80', 'slt'],
     ];
 
-    public function generateTosecName(
+    /**
+     * Builds a DTO with all filename components. No string concatenation beyond original per-part formatting.
+     */
+    public function generateDto(
         ZxProdRecord    $prod,
         ZxReleaseRecord $release,
         array           $allFiles,
         FileRecord      $fileDto,
         int             $duplicateIndex = 0
-    ): string
+    ): TosecNameDto
     {
-        $baseName = $this->buildBaseName($prod, $release, $allFiles, $fileDto);
-        $dumpFlag = $this->buildDumpFlag($prod, $release, $duplicateIndex);
-        $ext = strtolower(pathinfo($fileDto->originalFileName, PATHINFO_EXTENSION));
-        return $baseName . $dumpFlag . '.' . $ext;
+        // Detect languages from filename (may be multiple)
+        $detectedList = $this->filenameLanguageDetector->detectAll($fileDto->originalFileName); // list of "EN","RU",...
+
+        // Base atoms
+        $title = $this->nameSanitizer->sanitizeWithArticleHandling($prod->title);
+        $version = $release->version ? $this->nameSanitizer->sanitize($release->version) : null;
+        $isDemo = $release->releaseType === 'demoversion';
+        $productYear = $prod->year ?: null;
+        $publisher = $this->nameSanitizer->sanitize(trim($prod->publishers ?: '-'));
+
+        // If filename has languages -> override prod/release languages
+        $languages = !empty($detectedList)
+            ? implode(', ', $detectedList)
+            : $this->makeLanguages($prod, $release);
+
+        $hardwareExtras = $this->hardwarePlatformResolver->getAdditionalHardwareString($release) ?: null;
+        $mediaPart = count($allFiles) > 1 ? $this->makeMediaPart($allFiles, $fileDto) : null;
+        $isPublicDomain = in_array($prod->legalStatus, ['allowed', 'allowedzxart'], true);
+        $extension = strtolower(pathinfo($fileDto->originalFileName, PATHINFO_EXTENSION));
+
+        // Dump flag atoms
+        $dumpFlagCode = $this->resolveDumpFlagCode($prod, $release, $duplicateIndex);
+
+        // For 'tr' flag, use detected list if present; otherwise fallback to release/prod
+        $dumpLanguages = $dumpFlagCode === 'tr'
+            ? (!empty($detectedList)
+                ? implode(', ', $detectedList)
+                : $this->resolveDumpLanguagesForFlag($dumpFlagCode, $prod, $release))
+            : null;
+
+        $dumpYear = $this->buildDumpYear($release);
+        $dumpPublisher = $this->buildDumpPublisher($release);
+
+        return new TosecNameDto(
+            title: $title,
+            version: $version,
+            isDemo: $isDemo,
+            productYear: $productYear,
+            publisher: $publisher,
+            languages: $languages,
+            hardwareExtras: $hardwareExtras,
+            mediaPart: $mediaPart,
+            isPublicDomain: $isPublicDomain,
+            dumpFlagCode: $dumpFlagCode,
+            duplicateIndex: $duplicateIndex,
+            dumpLanguages: $dumpLanguages,
+            dumpYear: $dumpYear,
+            dumpPublisher: $dumpPublisher,
+            extension: $extension
+        );
     }
 
-    private function buildBaseName(
-        ZxProdRecord    $prod,
-        ZxReleaseRecord $release,
-        array           $files,
-        FileRecord      $fileDto
-    ): string
+    /** Returns 'p','a','h','tr','b', or null when no flag. */
+    private function resolveDumpFlagCode(ZxProdRecord $prod, ZxReleaseRecord $release, int $index): ?string
     {
-        $parts = [];
-
-        $parts[] = $this->makeTitle($prod->title);
-        if ($release->version) {
-            $parts[] = $this->nameSanitizer->sanitize($release->version);
+        // Legal-status driven
+        if (in_array($prod->legalStatus, ['forbidden', 'forbiddenzxart', 'insales'], true)) {
+            return 'p';
         }
-        if ($release->releaseType === 'demoversion') {
-            $parts[] = '(demo)';
-        }
-        $parts[] = $this->makeProdYear($prod);
-        $parts[] = $this->makePublisher($prod);
-
-        $languagesFlag = $this->makeLanguages($prod, $release);
-        if ($languagesFlag) {
-            $parts[] = $languagesFlag;
+        if (in_array($prod->legalStatus, ['mia', 'recovered', 'unreleased'], true)) {
+            return 'a';
         }
 
-        $hwExtras = $this->hardwarePlatformResolver->getAdditionalHardwareString($release);
-        if ($hwExtras) {
-            $parts[] = $hwExtras;
-        }
-
-        if (count($files) > 1) {
-            $parts[] = $this->makeMediaPart($files, $fileDto);
-        }
-
-        $copyright = $this->makeCopyright($prod);
-        if ($copyright) {
-            $parts[] = $copyright;
-        }
-
-        return implode('', $parts);
-    }
-
-    private function buildDumpFlag(ZxProdRecord $prod, ZxReleaseRecord $release, int $index): string
-    {
-        $indexString = $index > 1 ? (string)$index : '';
-        $sub = [];
-
-        if ($release->year) {
-            $sub[] = $release->year;
-        }
-
-        if ($release->publishers) {
-            $sub[] = $this->nameSanitizer->sanitize($release->publishers);
-        }
-
+        // Release-type driven
         $roleBasedFlags = [
             'crack' => 'h',
             'mod' => 'h',
@@ -103,49 +110,39 @@ final class TosecNameResolver
             'corrupted' => 'b',
             'incomplete' => 'b',
         ];
-
-        if (in_array($prod->legalStatus, ['forbidden', 'forbiddenzxart', 'insales'], true)) {
-            return '[p' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
+        $code = $roleBasedFlags[$release->releaseType] ?? null;
+        if ($code) {
+            return $code;
         }
 
-        if (in_array($prod->legalStatus, ['mia', 'recovered', 'unreleased'], true)) {
-            return '[a' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
-        }
-
-        $flagCode = $roleBasedFlags[$release->releaseType] ?? null;
-        if ($flagCode) {
-            if ($flagCode === 'tr') {
-                $langs = trim($release->languages ?: $prod->languages ?: '');
-                if ($langs) {
-                    return '[tr' . $indexString . ' ' . strtoupper($langs) . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
-                }
-            }
-
-            return '[' . $flagCode . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
-        }
-
+        // Duplicate index fallback from original logic
         if ($index > 0) {
-            return '[a' . $indexString . ($sub ? ' ' . implode(' ', $sub) : '') . ']';
+            return 'a';
         }
 
-        return '';
+        return null;
     }
 
-
-    private function makeTitle(string $title): string
+    /** Uppercase languages for 'tr' flag; null otherwise. */
+    private function resolveDumpLanguagesForFlag(?string $flagCode, ZxProdRecord $prod, ZxReleaseRecord $release): ?string
     {
-        return $this->nameSanitizer->sanitizeWithArticleHandling($title) . ' ';
+        if ($flagCode !== 'tr') {
+            return null;
+        }
+        $langs = trim($release->languages ?: $prod->languages ?: '');
+        return $langs ? strtoupper($langs) : null;
     }
 
-    private function makeProdYear(ZxProdRecord $prod): string
+    /** Year included in dump flag, or null. */
+    private function buildDumpYear(ZxReleaseRecord $release): ?int
     {
-        return $prod->year ? "($prod->year)" : '(19xx)';
+        return $release->year ?: null;
     }
 
-    private function makePublisher(ZxProdRecord $prod): string
+    /** Publisher included in dump flag (sanitized), or null. */
+    private function buildDumpPublisher(ZxReleaseRecord $release): ?string
     {
-        $publisher = trim($prod->publishers ?: '-');
-        return '(' . $this->nameSanitizer->sanitize($publisher) . ')';
+        return $release->publishers ? $this->nameSanitizer->sanitize($release->publishers) : null;
     }
 
     private function makeLanguages(ZxProdRecord $prod, ZxReleaseRecord $release): ?string
@@ -157,16 +154,7 @@ final class TosecNameResolver
         if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
             $langs = $prod->languages ?: '';
         }
-        $langs = strtoupper($langs);
-        return "($langs)";
-    }
-
-    private function makeCopyright(ZxProdRecord $prod): ?string
-    {
-        return match ($prod->legalStatus) {
-            'allowed', 'allowedzxart' => '(PD)',
-            default => null,
-        };
+        return strtoupper($langs);
     }
 
     private function makeMediaPart(array $files, FileRecord $currentFile): string
@@ -180,7 +168,6 @@ final class TosecNameResolver
                 break;
             }
         }
-
         if ($position === null) {
             throw new RuntimeException("Current file not found in files list");
         }
@@ -192,37 +179,10 @@ final class TosecNameResolver
             default => 'File',
         };
 
-        $mediaPart = $total < 10
+        return $total < 10
             ? "($label $position of $total)"
             : sprintf('(%s %02d of %02d)', $label, $position, $total);
-
-
-        return $mediaPart;
     }
-
-//    private function detectSideInfoFromOriginalFileName(?string $originalFileName): ?string
-//    {
-//        if (!$originalFileName) {
-//            return null;
-//        }
-//
-//        // Side A/B
-//        if (preg_match('/Side\s*([A-Z])/i', $originalFileName, $m)) {
-//            return "Side " . strtoupper($m[1]);
-//        }
-//
-//        // Side 1/2
-//        if (preg_match('/Side\s*(\d+)/i', $originalFileName, $m)) {
-//            return "Side $m[1]";
-//        }
-//
-//        // Part 1/2
-//        if (preg_match('/Part\s*(\d+)/i', $originalFileName, $m)) {
-//            return "Part $m[1]";
-//        }
-//
-//        return null;
-//    }
 
     private function detectMediaType(string $extension): string
     {
