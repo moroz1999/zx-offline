@@ -43,7 +43,7 @@ class RetryCommand extends Command
         try {
             $this->tasksService->addTask(TaskTypes::check_failed_files, null);
         } catch (TaskException $e) {
-            $this->loggerHolder->error($e->getMessage());;
+            $this->loggerHolder->error($e->getMessage());
         }
 
         $io->section('Starting daemon...');

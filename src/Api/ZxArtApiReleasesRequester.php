@@ -6,6 +6,7 @@ namespace App\Api;
 use Generator;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
+use JsonException;
 
 final readonly class ZxArtApiReleasesRequester
 {
@@ -65,7 +66,7 @@ final readonly class ZxArtApiReleasesRequester
             try {
                 $response = $this->client->get($url);
                 $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
-            } catch (GuzzleException|\JsonException $e) {
+            } catch (GuzzleException|JsonException $e) {
                 throw new ZxArtApiException("API error: " . $e->getMessage(), previous: $e);
             }
 

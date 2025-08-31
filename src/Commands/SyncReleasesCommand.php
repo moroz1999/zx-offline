@@ -43,7 +43,7 @@ class SyncReleasesCommand extends Command
         try {
             $this->tasksService->addTask(TaskTypes::sync_releases);
         } catch (TaskException $e) {
-            $this->loggerHolder->error($e->getMessage());;
+            $this->loggerHolder->error($e->getMessage());
         }
 
         $io->section('Starting daemon...');

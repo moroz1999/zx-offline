@@ -43,7 +43,7 @@ class SyncCommand extends Command
         try {
             $this->tasksService->addTask(TaskTypes::sync_prods, null);
         } catch (TaskException $e) {
-            $this->loggerHolder->error($e->getMessage());;
+            $this->loggerHolder->error($e->getMessage());
         }
 
         $io->section('Starting daemon...');

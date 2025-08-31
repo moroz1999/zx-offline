@@ -50,7 +50,7 @@ final readonly class ZxProdsSyncService
         }
 
         foreach (array_keys($existingIds) as $obsoleteId) {
-            $this->deleteProd($obsoleteId);;
+            $this->deleteProd($obsoleteId);
             $this->logger->info("Prod $obsoleteId deleted as removed from API");
         }
     }

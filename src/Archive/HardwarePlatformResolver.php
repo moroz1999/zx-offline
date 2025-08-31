@@ -45,6 +45,9 @@ final class HardwarePlatformResolver
         'Element ZX' => [
             'elementzxmb',
         ],
+        'GMX' => [
+            'gmx',
+        ],
     ];
 
     /**
@@ -98,6 +101,18 @@ final class HardwarePlatformResolver
         if ($this->isKMouse($hardware)) {
             $result[] = 'KM';
         }
+        if ($this->isAyMouse($hardware)) {
+            $result[] = 'AYM';
+        }
+        if ($this->isQuazarSurround($hardware)) {
+            $result[] = 'Quazar';
+        }
+        if ($this->isSaa($hardware)) {
+            $result[] = 'SAA';
+        }
+        if ($this->isCPM($hardware)) {
+            $result[] = 'CPM';
+        }
 
         return $result ? '(' . implode(', ', $result) . ')' : '';
     }
@@ -144,6 +159,26 @@ final class HardwarePlatformResolver
     private function isKMouse(array $hardware): bool
     {
         return in_array('kempstonmouse', $hardware, true);
+    }
+
+    private function isAyMouse(array $hardware): bool
+    {
+        return in_array('aymouse', $hardware, true);
+    }
+
+    private function isQuazarSurround(array $hardware): bool
+    {
+        return in_array('quazar_surround', $hardware, true);
+    }
+
+    private function isSaa(array $hardware): bool
+    {
+        return in_array('saa', $hardware, true);
+    }
+
+    private function isCPM(array $hardware): bool
+    {
+        return in_array('cpm', $hardware, true);
     }
 
     private function hasHardwareFlag(array $flags, ZxProdRecord $prod, ZxReleaseRecord $release): bool
