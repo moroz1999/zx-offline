@@ -42,7 +42,7 @@ final class HardwarePlatformResolver
         'Sam Coupe' => [
             'samcoupe',
         ],
-        'Element ZX' => [
+        'eLeMeNt ZX' => [
             'elementzxmb',
         ],
         'GMX' => [
@@ -112,6 +112,18 @@ final class HardwarePlatformResolver
         }
         if ($this->isCPM($hardware)) {
             $result[] = 'CPM';
+        }
+        if (in_array('atm', $hardware, true)) {
+            $result[] = 'ATM';
+        }
+        if (in_array('atm2', $hardware, true)) {
+            $result[] = 'ATM2';
+        }
+        if (in_array('baseconf', $hardware, true)) {
+            $result[] = 'BaseConf';
+        }
+        if (in_array('tsconf', $hardware, true)) {
+            $result[] = 'TSConf';
         }
 
         return $result ? '(' . implode(', ', $result) . ')' : '';

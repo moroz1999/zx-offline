@@ -41,7 +41,7 @@ final readonly class ZxArtApiReleasesRequester
      */
     public function getByProdId(int $prodId): Generator
     {
-        $url = self::BASE_URL . '/filter:zxProdId=' . $prodId;
+        $url = self::BASE_URL . ';zxProdId=' . $prodId;
         yield from $this->fetchReleases($url);
     }
 
