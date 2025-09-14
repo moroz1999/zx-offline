@@ -28,7 +28,7 @@ final readonly class TosecNameDto
         public ?string $dumpPublisher,   // sanitized publisher included in flag or null
 
         // File extension (lowercase, may be "")
-        public string  $extension
+        public string  $extension,
     )
     {
     }

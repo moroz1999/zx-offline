@@ -84,7 +84,7 @@ final class TosecNameResolver
             dumpLanguages: $dumpLanguages,
             dumpYear: $dumpYear,
             dumpPublisher: $dumpPublisher,
-            extension: $extension
+            extension: $extension,
         );
     }
 
@@ -172,6 +172,9 @@ final class TosecNameResolver
             throw new RuntimeException("Current file not found in files list");
         }
 
+        $side = $this->detectSideFromOriginalFileName($currentFile->originalFileName);
+        $part = $this->detectPartFromOriginalFileName($currentFile->originalFileName);
+
         $group = $this->detectMediaType($currentFile->type);
         $label = match ($group) {
             'disk' => 'Disk',
@@ -179,9 +182,14 @@ final class TosecNameResolver
             default => 'File',
         };
 
-        return $total < 10
-            ? "($label $position of $total)"
-            : sprintf('(%s %02d of %02d)', $label, $position, $total);
+        $base = $total < 10
+            ? sprintf('%s %d of %d', $label, $position, $total)
+            : sprintf('%s %02d of %02d', $label, $position, $total);
+
+        $extra = array_filter([$side, $part]);
+        $full = $extra ? $base . ', ' . implode(', ', $extra) : $base;
+
+        return sprintf('(%s)', $full);
     }
 
     private function detectMediaType(string $extension): string
@@ -194,4 +202,39 @@ final class TosecNameResolver
         }
         return 'unknown';
     }
+
+    private function detectSideFromOriginalFileName(?string $originalFileName): ?string
+    {
+        if (!$originalFileName) {
+            return null;
+        }
+
+        // Side A/B
+        if (preg_match('/Side\s*([A-Z])/i', $originalFileName, $m)) {
+            return strtoupper($m[1]);
+        }
+
+        // Side 1/2
+        if (preg_match('/Side\s*(\d+)/i', $originalFileName, $m)) {
+            return $m[1];
+        }
+
+
+        return null;
+    }
+
+    private function detectPartFromOriginalFileName(?string $originalFileName): ?string
+    {
+        if (!$originalFileName) {
+            return null;
+        }
+
+        // Part 1/2
+        if (preg_match('/Part\s*(\d+)/i', $originalFileName, $m)) {
+            return $m[1];
+        }
+
+        return null;
+    }
+
 }

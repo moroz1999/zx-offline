@@ -1,7 +1,9 @@
 <?php
 
 
+use App\Archive\DirectoryEntriesCounter;
 use App\Archive\FileArchiveService;
+use App\Archive\FilesystemDirectoryEntriesCounter;
 use App\DB\DatabaseServiceProvider;
 use App\Logging\LoggerHolder;
 use GuzzleHttp\Client;
@@ -14,6 +16,7 @@ use function DI\create;
 use function DI\get;
 
 return [
+    DirectoryEntriesCounter::class => get(FilesystemDirectoryEntriesCounter::class),
     LoggerInterface::class => get(LoggerHolder::class),
     'archiveBasePath' => static fn() => __DIR__ . '/../../files/',
     'databasePath' => static fn() => __DIR__ . '/../../storage/database.sqlite',

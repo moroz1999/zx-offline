@@ -13,7 +13,7 @@ final class LanguageCodeRegistry
     {
         return [
             'be','bs','by','ca','cs','da','de','el','en','eo','es','eu','fi','fr','gl','hr',
-            'hu','is','it','la','lt','lv','nl','no','pl','pt','ro','ru','sh','sk','sl','sr',
+            'hu','is','it','la','lt','lv','nl','no','pl','pt','ru','sh','sk','sl','sr',
             'sv','tr','ua','he',
         ];
     }
@@ -45,7 +45,6 @@ final class LanguageCodeRegistry
             'dan' => 'da',
             'fin' => 'fi',
             'hun' => 'hu',
-            'rom' => 'ro',
             'scr' => 'sh',
             'srp' => 'sr',
             'hrv' => 'hr',

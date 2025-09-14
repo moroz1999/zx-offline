@@ -81,6 +81,15 @@ final readonly class ZxReleaseFilesChecker
         }
     }
 
+    /**
+     * @param FileRecord $fileRecord
+     * @param ZxProdRecord $prod
+     * @param ZxReleaseRecord $release
+     * @param FileRecord[] $allFiles
+     * @return void
+     * @throws DownloadFailedException
+     * @throws DownloadFatalException
+     */
     private function syncOneFile(
         FileRecord      $fileRecord,
         ZxProdRecord    $prod,
@@ -98,17 +107,19 @@ final readonly class ZxReleaseFilesChecker
                 $fileRecord,
                 $duplicateIndex
             );
+            // full name in tosec format is used to count duplicates before physically creating file in folder
             $tosecName = $this->tosecNameFormatter->toFilename($tosecDto);
+            $baseName = $this->tosecNameFormatter->toBaseName($tosecDto);
+            $extras = $this->tosecNameFormatter->toExtras($tosecDto);
             $duplicateIndex++;
         } while ($this->filesRepository->existsFileName($tosecName));
 
-        $relativePaths = $this->fileDirectoryResolver->resolve($prod, $release);
+        $relativePaths = $this->fileDirectoryResolver->resolve($prod, $release, $baseName);
         array_map(fn(string $path) => $this->fileArchiveService->checkPath($path), $relativePaths);
 
         $archiveBasePath = $this->fileArchiveService->getArchiveBasePath();
-        $filePaths = array_map(static fn(string $path) => $path . $tosecName, $relativePaths);
-        $targetPaths = array_map(fn(string $filePath) => $archiveBasePath . $filePath, $filePaths);
-
+        $filePaths = array_map(static fn(string $path) => $path . $extras, $relativePaths);
+        $targetPaths = array_map(static fn(string $filePath) => $archiveBasePath . $filePath, $filePaths);
 
         $needsDownload = !$this->fileArchiveService->fileExists($fileRecord);
 

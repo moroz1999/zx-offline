@@ -8,11 +8,43 @@ namespace App\Archive;
  */
 final class TosecNameFormatter
 {
+    private const BASE_NAME_LIMIT = 64;
+
     public function toFilename(TosecNameDto $dto): string
+    {
+        return $this->toBaseName($dto) . $this->toExtras($dto);
+    }
+
+    public function toBaseName(TosecNameDto $dto): string
+    {
+        $parts = $this->buildBaseParts($dto);
+        return implode('', $parts);
+    }
+
+    public function toExtras(TosecNameDto $dto): string
+    {
+        $parts = $this->buildExtraParts($dto);
+
+        $dumpFlag = $this->buildDumpFlag($dto);
+        if ($dumpFlag !== '') {
+            $parts[] = $dumpFlag;
+        }
+
+        $parts[] = '.' . $dto->extension;
+
+        return implode('', $parts);
+    }
+
+    private function buildBaseParts(TosecNameDto $dto): array
     {
         $parts = [];
 
-        $parts[] = $dto->title . ' ';
+        $title = mb_strlen($dto->title) > self::BASE_NAME_LIMIT
+            ? mb_substr($dto->title, 0, self::BASE_NAME_LIMIT)
+            : $dto->title;
+
+        // keep original spacing contract: title with trailing space
+        $parts[] = $title . ' ';
 
         if ($dto->version) {
             $parts[] = $dto->version;
@@ -24,6 +56,13 @@ final class TosecNameFormatter
 
         $parts[] = '(' . ($dto->productYear !== null ? (string)$dto->productYear : '19xx') . ')';
         $parts[] = '(' . $dto->publisher . ')';
+
+        return $parts;
+    }
+
+    private function buildExtraParts(TosecNameDto $dto): array
+    {
+        $parts = [];
 
         if ($dto->languages) {
             $parts[] = '(' . $dto->languages . ')';
@@ -41,10 +80,7 @@ final class TosecNameFormatter
             $parts[] = '(PD)';
         }
 
-        $base = implode('', $parts);
-        $dumpFlag = $this->buildDumpFlag($dto);
-
-        return $base . $dumpFlag . '.' . $dto->extension;
+        return $parts;
     }
 
     private function buildDumpFlag(TosecNameDto $dto): string
