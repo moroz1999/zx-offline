@@ -4,21 +4,34 @@ declare(strict_types=1);
 namespace App\Archive;
 
 use RuntimeException;
-use ZipArchive;
-use FilesystemIterator;
 
-final class ArchiveExtractionService
+/**
+ * Facade for extracting supported archives and removing them after a successful extraction.
+ * - Picks proper extractor by extension
+ * - Creates destination directory
+ * - Guards against path traversal
+ * - Flattens single nested dir
+ * - Deletes original archive
+ */
+final readonly class ArchiveExtractionService
 {
-    public function __construct()
-    {
+    /** @var ArchiveExtractor[] */
+    private array $extractors;
+
+    public function __construct(
+        private PathTraversalGuard $pathTraversalGuard,
+        private DirectoryFlattener $directoryFlattener,
+        ZipArchiveExtractor $zipExtractor,
+        PharTarExtractor $tarExtractor
+    ) {
+        $this->extractors = [$zipExtractor, $tarExtractor];
     }
 
     /**
-     * Extracts ZIP archive into a directory with the same name without extension.
-     * Deletes the archive file after successful extraction.
+     * Extracts an archive into a directory with the same name (no extension) and deletes the archive file.
      *
      * @param string $archiveBasePath Absolute base path
-     * @param string $relativePath Relative archive path (e.g. "games/file.zip")
+     * @param string $relativePath    Relative archive path (e.g. "games/file.zip")
      * @return string Relative path of extracted directory
      */
     public function extractAndRemove(string $archiveBasePath, string $relativePath): string
@@ -29,47 +42,27 @@ final class ArchiveExtractionService
             throw new RuntimeException('Cannot extract missing file: ' . $absoluteArchivePath);
         }
 
-        $extension = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION));
-        if ($extension !== 'zip') {
-            return $relativePath; // skip unsupported formats
+        $extractor = $this->pickExtractor($relativePath);
+        if ($extractor === null) {
+            // Unsupported format: return as-is without extraction
+            return $relativePath;
         }
 
-        $relativeDirectoryPath = $this->stripExtension($relativePath);
+        $relativeDirectoryPath = $this->stripExtensionChain($relativePath);
         $absoluteDirectoryPath = $archiveBasePath . DIRECTORY_SEPARATOR . $relativeDirectoryPath;
-        if (!is_dir($absoluteDirectoryPath) && !mkdir($absoluteDirectoryPath, 0777, true) && !is_dir($absoluteDirectoryPath)) {
-            throw new RuntimeException("Failed to create directory: $absoluteDirectoryPath");
-        }
 
-        $zip = new ZipArchive();
-        if ($zip->open($absoluteArchivePath) !== true) {
-            throw new RuntimeException("Failed to open zip: $absoluteArchivePath");
-        }
+        $this->ensureDir($absoluteDirectoryPath);
 
-        // Basic Zip Slip protection
-        for ($i = 0; $i < $zip->numFiles; $i++) {
-            $stat = $zip->statIndex($i);
-            $entryName = $stat['name'] ?? '';
-            if ($entryName === '' || str_contains($entryName, "\0")) {
-                $zip->close();
-                throw new RuntimeException("Invalid zip entry name in: $absoluteArchivePath");
-            }
-            $normalized = str_replace(['\\', '/'], DIRECTORY_SEPARATOR, $entryName);
-            if (str_contains($normalized, '..' . DIRECTORY_SEPARATOR) || str_starts_with($normalized, DIRECTORY_SEPARATOR)) {
-                $zip->close();
-                throw new RuntimeException("Zip entry attempts path traversal: $entryName");
-            }
-        }
+        // Pre-flight: check entries for path traversal (best-effort)
+        $this->pathTraversalGuard->assertSafe($extractor->listEntries($absoluteArchivePath));
 
-        if (!$zip->extractTo($absoluteDirectoryPath)) {
-            $zip->close();
-            throw new RuntimeException("Failed to extract zip to: $absoluteDirectoryPath");
-        }
+        // Extract
+        $extractor->extract($absoluteArchivePath, $absoluteDirectoryPath);
 
-        $zip->close();
+        // Post-process: flatten single nested directory if any
+        $this->directoryFlattener->flattenIfSingleSubdirectory($absoluteDirectoryPath);
 
-        // Normalize if archive contained only one top-level directory
-        $this->flattenIfSingleSubdirectory($absoluteDirectoryPath);
-
+        // Remove original archive
         if (!unlink($absoluteArchivePath)) {
             throw new RuntimeException("Failed to delete archive after extraction: $absoluteArchivePath");
         }
@@ -77,46 +70,51 @@ final class ArchiveExtractionService
         return $relativeDirectoryPath;
     }
 
-    private function stripExtension(string $relativePath): string
+    private function pickExtractor(string $relativePath): ?ArchiveExtractor
     {
-        $info = pathinfo($relativePath);
-        return ($info['dirname'] !== '.' ? $info['dirname'] . DIRECTORY_SEPARATOR : '')
-            . $info['filename'];
+        $lower = strtolower($relativePath);
+
+        foreach ($this->extractors as $extractor) {
+            if ($extractor->supports($lower)) {
+                return $extractor;
+            }
+        }
+
+        return null;
     }
 
     /**
-     * If the extracted directory contains only a single subdirectory,
-     * move its contents one level up and remove the redundant subdirectory.
+     * Strips common compressed archive extensions chains:
+     * - file.zip -> file
+     * - file.tar -> file
+     * - file.tar.gz / file.tgz -> file
      */
-    private function flattenIfSingleSubdirectory(string $directory): void
+    private function stripExtensionChain(string $relativePath): string
     {
-        $iterator = new FilesystemIterator($directory, FilesystemIterator::SKIP_DOTS);
+        $dir = pathinfo($relativePath, PATHINFO_DIRNAME);
+        $filename = pathinfo($relativePath, PATHINFO_FILENAME);
+        $ext = strtolower(pathinfo($relativePath, PATHINFO_EXTENSION));
 
-        if (!$iterator->valid()) {
-            return; // empty directory
-        }
-
-        $firstEntry = $iterator->current();
-        $iterator->next();
-        if ($iterator->valid()) {
-            return; // more than one entry -> leave as is
-        }
-
-        if ($firstEntry && $firstEntry->isDir()) {
-            $nestedDirectory = $firstEntry->getPathname();
-            $nestedIterator = new FilesystemIterator($nestedDirectory, FilesystemIterator::SKIP_DOTS);
-
-            foreach ($nestedIterator as $entry) {
-                $targetPath = $directory . DIRECTORY_SEPARATOR . $entry->getBasename();
-                if (!rename($entry->getPathname(), $targetPath)) {
-                    throw new RuntimeException("Failed to move {$entry->getPathname()} -> $targetPath");
-                }
+        // Handle .tgz -> .tar.gz semantics
+        if ($ext === 'tgz') {
+            $filename = pathinfo($filename, PATHINFO_FILENAME); // drop implicit ".tar"
+        } elseif ($ext === 'gz' || $ext === 'bz2' || $ext === 'xz' || $ext === 'zst') {
+            // file.tar.gz -> remove .gz and .tar if present
+            $maybeTar = pathinfo($filename, PATHINFO_EXTENSION);
+            if (strtolower($maybeTar) === 'tar') {
+                $filename = pathinfo($filename, PATHINFO_FILENAME);
             }
-
-            if (!rmdir($nestedDirectory)) {
-                throw new RuntimeException("Failed to remove redundant directory: $nestedDirectory");
-            }
+        } elseif ($ext === 'tar' || $ext === 'zip') {
+            // single-strip already done by PATHINFO_FILENAME
         }
+
+        return ($dir !== '.' ? $dir . DIRECTORY_SEPARATOR : '') . $filename;
     }
 
+    private function ensureDir(string $absoluteDirectoryPath): void
+    {
+        if (!is_dir($absoluteDirectoryPath) && !mkdir($absoluteDirectoryPath, 0777, true) && !is_dir($absoluteDirectoryPath)) {
+            throw new RuntimeException("Failed to create directory: $absoluteDirectoryPath");
+        }
+    }
 }

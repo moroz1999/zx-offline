@@ -186,7 +186,15 @@ final class TosecNameResolver
             ? sprintf('%s %d of %d', $label, $position, $total)
             : sprintf('%s %02d of %02d', $label, $position, $total);
 
-        $extra = array_filter([$side, $part]);
+        $extra = [];
+
+        if ($part !== null && $part !== '') {
+            $extra[] = 'Part ' . $part;
+        }
+        if ($side !== null && $side !== '') {
+            $extra[] = 'Side ' . strtoupper((string)$side);
+        }
+
         $full = $extra ? $base . ', ' . implode(', ', $extra) : $base;
 
         return sprintf('(%s)', $full);

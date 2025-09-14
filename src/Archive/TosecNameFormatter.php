@@ -45,15 +45,6 @@ final class TosecNameFormatter
 
         // keep original spacing contract: title with trailing space
         $parts[] = $title . ' ';
-
-        if ($dto->version) {
-            $parts[] = $dto->version;
-        }
-
-        if ($dto->isDemo) {
-            $parts[] = '(demo)';
-        }
-
         $parts[] = '(' . ($dto->productYear !== null ? (string)$dto->productYear : '19xx') . ')';
         $parts[] = '(' . $dto->publisher . ')';
 
@@ -63,6 +54,14 @@ final class TosecNameFormatter
     private function buildExtraParts(TosecNameDto $dto): array
     {
         $parts = [];
+
+        if ($dto->version) {
+            $parts[] = $dto->version;
+        }
+
+        if ($dto->isDemo) {
+            $parts[] = '(demo)';
+        }
 
         if ($dto->languages) {
             $parts[] = '(' . $dto->languages . ')';
