@@ -8,7 +8,6 @@ namespace App\Archive;
  */
 final class TosecNameFormatter
 {
-    private const BASE_NAME_LIMIT = 64;
 
     public function toFilename(TosecNameDto $dto): string
     {
@@ -30,6 +29,9 @@ final class TosecNameFormatter
             $parts[] = $dumpFlag;
         }
 
+        if ($parts === []) {
+            $parts[] = $dto->title;
+        }
         $parts[] = '.' . $dto->extension;
 
         return implode('', $parts);
@@ -39,12 +41,8 @@ final class TosecNameFormatter
     {
         $parts = [];
 
-        $title = mb_strlen($dto->title) > self::BASE_NAME_LIMIT
-            ? mb_substr($dto->title, 0, self::BASE_NAME_LIMIT)
-            : $dto->title;
-
         // keep original spacing contract: title with trailing space
-        $parts[] = $title . ' ';
+        $parts[] = $dto->title . ' ';
         $parts[] = '(' . ($dto->productYear !== null ? (string)$dto->productYear : '19xx') . ')';
         $parts[] = '(' . $dto->publisher . ')';
 

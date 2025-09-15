@@ -7,14 +7,22 @@ use App\Utils\Transliterator;
 
 final readonly class NameSanitizer
 {
+    private const BASE_NAME_LIMIT = 64;
+
     public function __construct(
         private Transliterator $transliterator,
-    ) {
+    )
+    {
     }
 
     public function sanitize(string $raw): string
     {
         $raw = $this->transliterator->transliterate($raw);
+
+        $raw = mb_strlen($raw) > self::BASE_NAME_LIMIT
+            ? mb_substr($raw, 0, self::BASE_NAME_LIMIT)
+            : $raw;
+
         return trim(preg_replace('#[\/\\\\:*?"<>|]#', '', $raw));
     }
 
