@@ -12,9 +12,11 @@ final readonly class FileDirectoryResolver
 
     public function __construct(
         private HardwarePlatformResolver $hardwarePlatformResolver,
-        private NameSanitizer $nameSanitizer,
-        private DirectoryEntriesCounter $directoryEntriesCounter, // inject FS counter for SRP/testability
-    ) {
+        private NameSanitizer            $nameSanitizer,
+        private FileArchiveService       $fileArchiveService,
+        private DirectoryEntriesCounter  $directoryEntriesCounter, // inject FS counter for SRP/testability
+    )
+    {
     }
 
     /**
@@ -52,10 +54,11 @@ final readonly class FileDirectoryResolver
      */
     private function resolveBucketLetterFolder(string $platform, string $category, string $letter): string
     {
-        $basePath = $platform . DIRECTORY_SEPARATOR . $category;
+        $archiveBasePath = $this->fileArchiveService->getArchiveBasePath();
+        $basePath = $archiveBasePath . $platform . DIRECTORY_SEPARATOR . $category;
 
         for ($suffixIndex = 1; $suffixIndex < PHP_INT_MAX; $suffixIndex++) {
-            $suffix = $suffixIndex === 1 ? '' : (string) $suffixIndex;
+            $suffix = $suffixIndex === 1 ? '' : (string)$suffixIndex;
             $candidateFolder = $letter . $suffix;
 
             $candidatePath = $basePath . DIRECTORY_SEPARATOR . $candidateFolder;
