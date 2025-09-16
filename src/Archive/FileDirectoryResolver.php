@@ -39,7 +39,7 @@ final readonly class FileDirectoryResolver
         }
 
         return array_map(function (string $platform) use ($category, $letter, $baseName): string {
-            $bucket = $this->resolveBucketLetterFolder($platform, $category, $letter);
+            $bucket = $this->resolveBucketLetterFolder($platform, $category, $letter, $baseName);
 
             return $platform
                 . DIRECTORY_SEPARATOR . $category
@@ -52,7 +52,7 @@ final readonly class FileDirectoryResolver
     /**
      * Picks a bucket folder like "A", "A2", "A3"... ensuring each has < MAX_ENTRIES_PER_BUCKET.
      */
-    private function resolveBucketLetterFolder(string $platform, string $category, string $letter): string
+    private function resolveBucketLetterFolder(string $platform, string $category, string $letter, string $baseName): string
     {
         $archiveBasePath = $this->fileArchiveService->getArchiveBasePath();
         $basePath = $archiveBasePath . $platform . DIRECTORY_SEPARATOR . $category;
@@ -62,6 +62,11 @@ final readonly class FileDirectoryResolver
             $candidateFolder = $letter . $suffix;
 
             $candidatePath = $basePath . DIRECTORY_SEPARATOR . $candidateFolder;
+            // if there is already prod's folder in letter bucket, then use it.
+            $candidateFullPath = $basePath . DIRECTORY_SEPARATOR . $candidateFolder . DIRECTORY_SEPARATOR . $baseName;
+            if (is_dir($candidateFullPath)){
+                return $candidatePath;
+            }
 
             // Count directory entries; treat non-existing folder as 0.
             $entries = $this->directoryEntriesCounter->count($candidatePath);

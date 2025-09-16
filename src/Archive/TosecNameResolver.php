@@ -192,7 +192,7 @@ final class TosecNameResolver
             $extra[] = 'Part ' . $part;
         }
         if ($side !== null && $side !== '') {
-            $extra[] = 'Side ' . strtoupper((string)$side);
+            $extra[] = 'Side ' . strtoupper($side);
         }
 
         $full = $extra ? $base . ', ' . implode(', ', $extra) : $base;
