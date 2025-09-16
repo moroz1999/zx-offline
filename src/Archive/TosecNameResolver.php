@@ -37,7 +37,7 @@ final class TosecNameResolver
     ): TosecNameDto
     {
         // Detect languages from filename (may be multiple)
-        $detectedList = $this->filenameLanguageDetector->detectAll($fileDto->originalFileName); // list of "EN","RU",...
+        $languages = $this->resolveLanguagesForFile($fileDto, $prod, $release);
 
         // Base atoms
         $title = $this->nameSanitizer->sanitizeWithArticleHandling($prod->title);
@@ -46,13 +46,12 @@ final class TosecNameResolver
         $productYear = $prod->year ?: null;
         $publisher = $this->nameSanitizer->sanitize(trim($prod->publishers ?: '-'));
 
-        // If filename has languages -> override prod/release languages
-        $languages = !empty($detectedList)
-            ? implode(', ', $detectedList)
-            : $this->makeLanguages($prod, $release);
-
         $hardwareExtras = $this->hardwarePlatformResolver->getAdditionalHardwareString($release) ?: null;
-        $mediaPart = count($allFiles) > 1 ? $this->makeMediaPart($allFiles, $fileDto) : null;
+
+        $mediaPart = count($allFiles) > 1
+            ? $this->makeMediaPart($allFiles, $fileDto, $languages, $version, $prod, $release)
+            : null;
+
         $isPublicDomain = in_array($prod->legalStatus, ['allowed', 'allowedzxart'], true);
         $extension = strtolower(pathinfo($fileDto->originalFileName, PATHINFO_EXTENSION));
 
@@ -157,47 +156,91 @@ final class TosecNameResolver
         return strtoupper($langs);
     }
 
-    private function makeMediaPart(array $files, FileRecord $currentFile): string
+    private function resolveLanguagesForFile(FileRecord $file, ZxProdRecord $prod, ZxReleaseRecord $release): ?string
     {
-        $total = count($files);
-        $position = null;
+        // Prefer filename languages; fallback to prod/release
+        $detected = $this->filenameLanguageDetector->detectAll($file->originalFileName);
+        if (!empty($detected)) {
+            return implode(', ', $detected);
+        }
+        return $this->makeLanguages($prod, $release);
+    }
 
-        foreach ($files as $index => $file) {
-            if ($file->id === $currentFile->id) {
-                $position = $index + 1;
+    private function makeMediaPart(
+        array           $files,
+        FileRecord      $currentFile,
+        ?string         $currentLanguages,
+        ?string         $currentVersion,
+        ZxProdRecord    $prod,
+        ZxReleaseRecord $release
+    ): ?string
+    {
+        // Determine current media group (disk/tape/rom/snapshot/unknown)
+        $currentGroup = $this->detectMediaType($currentFile->type);
+
+        // Collect group peers: same media group + same languages + same version
+        $group = [];
+        foreach ($files as $file) {
+            if ($this->detectMediaType($file->type) !== $currentGroup) {
+                continue;
+            }
+            $langs = $this->resolveLanguagesForFile($file, $prod, $release);
+            if ($langs !== $currentLanguages) {
+                continue;
+            }
+            $v = $release->version ? $this->nameSanitizer->sanitize($release->version) : null;
+            if ($v !== $currentVersion) {
+                continue;
+            }
+            $group[] = $file;
+        }
+
+        // Determine side/part extras from current file name
+        $side = $this->detectSideFromOriginalFileName($currentFile->originalFileName);
+        $part = $this->detectPartFromOriginalFileName($currentFile->originalFileName);
+        $extras = [];
+        if ($part !== null && $part !== '') {
+            $extras[] = 'Part ' . $part;
+        }
+        if ($side !== null && $side !== '') {
+            $extras[] = 'Side ' . strtoupper($side);
+        }
+
+        // If this logical group has only one file: no numbering, no "Disk/Tape" label
+        if (count($group) === 1) {
+            if (empty($extras)) {
+                return null;
+            }
+            return '(' . implode(', ', $extras) . ')';
+        }
+
+        // Find position of current file inside the logical group
+        $position = null;
+        foreach ($group as $idx => $f) {
+            if ($f->id === $currentFile->id) {
+                $position = $idx + 1;
                 break;
             }
         }
         if ($position === null) {
-            throw new RuntimeException("Current file not found in files list");
+            throw new RuntimeException('Current file not found in grouped list');
         }
 
-        $side = $this->detectSideFromOriginalFileName($currentFile->originalFileName);
-        $part = $this->detectPartFromOriginalFileName($currentFile->originalFileName);
-
-        $group = $this->detectMediaType($currentFile->type);
-        $label = match ($group) {
+        // Label by media group
+        $label = match ($currentGroup) {
             'disk' => 'Disk',
             'tape' => 'Tape',
             default => 'File',
         };
 
+        $total = count($group);
         $base = $total < 10
             ? sprintf('%s %d of %d', $label, $position, $total)
             : sprintf('%s %02d of %02d', $label, $position, $total);
 
-        $extra = [];
-
-        if ($part !== null && $part !== '') {
-            $extra[] = 'Part ' . $part;
-        }
-        if ($side !== null && $side !== '') {
-            $extra[] = 'Side ' . strtoupper($side);
-        }
-
-        $full = $extra ? $base . ', ' . implode(', ', $extra) : $base;
-
-        return sprintf('(%s)', $full);
+        return empty($extras)
+            ? sprintf('(%s)', $base)
+            : sprintf('(%s, %s)', $base, implode(', ', $extras));
     }
 
     private function detectMediaType(string $extension): string

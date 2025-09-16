@@ -43,7 +43,7 @@ final class FilenameLanguageDetector
             }
             $result[] = $upper;
         }
-
+        sort($result);
         return array_unique($result);
     }
 }

@@ -65,7 +65,7 @@ final readonly class FileDirectoryResolver
             // if there is already prod's folder in letter bucket, then use it.
             $candidateFullPath = $basePath . DIRECTORY_SEPARATOR . $candidateFolder . DIRECTORY_SEPARATOR . $baseName;
             if (is_dir($candidateFullPath)){
-                return $candidatePath;
+                return $candidateFolder;
             }
 
             // Count directory entries; treat non-existing folder as 0.
