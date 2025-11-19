@@ -40,7 +40,7 @@ final class TosecNameResolver
         $languages = $this->resolveLanguagesForFile($fileDto, $prod, $release);
 
         // Base atoms
-        $title = $this->nameSanitizer->sanitizeWithArticleHandling($prod->title);
+        $title = $prod->sanitizedTitle;
         $version = $release->version ? $this->nameSanitizer->sanitize($release->version) : null;
         $isDemo = $release->releaseType === 'demoversion';
         $productYear = $prod->year ?: null;

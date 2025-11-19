@@ -11,16 +11,18 @@ use App\Tasks\TaskRecord;
 use App\Tasks\TasksRepository;
 use App\Tasks\TaskStatuses;
 use App\Tasks\TaskTypes;
+use App\ZxProds\ZxProdsTitleBucketsBuilder;
 use App\ZxReleases\ZxReleaseException;
 use Throwable;
 
 readonly class TaskRunner
 {
     public function __construct(
-        private ZxProdsSyncService    $prodsSyncService,
-        private ZxReleasesSyncService $zxReleasesSyncService,
-        private ZxReleaseFilesChecker $zxReleaseFilesChecker,
-        private TasksRepository       $tasksService,
+        private ZxProdsSyncService         $prodsSyncService,
+        private ZxReleasesSyncService      $zxReleasesSyncService,
+        private ZxReleaseFilesChecker      $zxReleaseFilesChecker,
+        private ZxProdsTitleBucketsBuilder $zxProdsTitleBucketsBuilder,
+        private TasksRepository            $tasksService,
     )
     {
     }
@@ -40,6 +42,7 @@ readonly class TaskRunner
                 TaskTypes::check_failed_files->name => $this->runCheckFailedFiles(),
                 TaskTypes::check_release_files->name => $this->runCheckReleaseFiles((int)$task->targetId),
                 TaskTypes::sync_prods->name => $this->runSyncProds(),
+                TaskTypes::build_titles->name => $this->buildTitles(),
                 TaskTypes::sync_releases->name => $this->runSyncReleases(),
                 TaskTypes::check_prod_releases->name => $this->runCheckProdReleases((int)$task->targetId),
                 TaskTypes::delete_release->name => $this->runDeleteRelease((int)$task->targetId),
@@ -62,6 +65,19 @@ readonly class TaskRunner
         try {
             $this->prodsSyncService->sync();
             $this->tasksService->addTask(TaskTypes::sync_releases);
+            $this->tasksService->addTask(TaskTypes::build_titles);
+        } catch (TaskException $e) {
+            throw new TaskRunnerException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
+        }
+    }
+
+    /**
+     * @throws TaskRunnerException
+     */
+    private function buildTitles(): void
+    {
+        try {
+            $this->zxProdsTitleBucketsBuilder->buildAndSaveBuckets();
         } catch (TaskException $e) {
             throw new TaskRunnerException("Error adding {TaskTypes::sync_releases->name} task: " . $e->getMessage());
         }
@@ -87,6 +103,7 @@ readonly class TaskRunner
 
     private function runCheckReleaseFiles(int $zxReleaseId): void
     {
+        exit();
         $this->zxReleaseFilesChecker->syncReleaseFiles($zxReleaseId);
     }
 

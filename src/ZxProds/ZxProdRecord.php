@@ -8,6 +8,7 @@ final readonly class ZxProdRecord
     public function __construct(
         public int     $id,
         public string  $title,
+        public string  $sanitizedTitle,
         public int     $dateModified,
         public ?string $languages,
         public ?string $publishers,

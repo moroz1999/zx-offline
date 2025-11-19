@@ -6,6 +6,7 @@ use App\Archive\FileArchiveService;
 use App\Archive\FilesystemDirectoryEntriesCounter;
 use App\DB\DatabaseServiceProvider;
 use App\Logging\LoggerHolder;
+use App\ZxProds\TitleBucketsCacheStorage;
 use GuzzleHttp\Client;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
@@ -18,11 +19,13 @@ use function DI\get;
 return [
     DirectoryEntriesCounter::class => get(FilesystemDirectoryEntriesCounter::class),
     LoggerInterface::class => get(LoggerHolder::class),
+    'bucketsPath' => static fn() => __DIR__ . '/../../src/config/buckets.json',
     'archiveBasePath' => static fn() => __DIR__ . '/../../files/',
     'databasePath' => static fn() => __DIR__ . '/../../storage/database.sqlite',
     Doctrine\DBAL\Connection::class => DI\factory(function (DatabaseServiceProvider $db) {
         return $db->get();
     }),
+    TitleBucketsCacheStorage::class => create()->constructor(get(LoggerInterface::class), get('bucketsPath')),
     DatabaseServiceProvider::class => create()->constructor(get('databasePath')),
     FileArchiveService::class => create()->constructor(get('archiveBasePath')),
     Client::class => create()->constructor([

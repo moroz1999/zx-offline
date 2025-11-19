@@ -29,7 +29,7 @@ final readonly class NameSanitizer
     public function sanitizeWithArticleHandling(string $raw): string
     {
         $sanitized = $this->sanitize($raw);
-        if (preg_match('/^(The|A|Le|La|Les|Los|Die|De)\s+(.*)$/i', $sanitized, $m)) {
+        if (preg_match('/^(Il|The|A|Le|La|Les|Los|Die|De)\s+(.*)$/i', $sanitized, $m)) {
             return "$m[2], $m[1]";
         }
         return $sanitized;

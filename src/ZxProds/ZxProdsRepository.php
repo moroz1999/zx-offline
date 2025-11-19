@@ -16,6 +16,21 @@ final readonly class ZxProdsRepository
     }
 
     /**
+     * @return string[]
+     * @throws Exception
+     */
+    public function fetchAllSanitizedTitles(): array
+    {
+        $queryBuilder = $this->db->createQueryBuilder();
+
+        return $queryBuilder
+            ->select('sanitizedTitle')
+            ->from(Tables::zx_prods->name)
+            ->executeQuery()
+            ->fetchFirstColumn();
+    }
+
+    /**
      * @return int[]
      * @throws ZxProdException
      */
@@ -49,6 +64,7 @@ final readonly class ZxProdsRepository
             return $row ? new ZxProdRecord(
                 id: $row['id'],
                 title: $row['title'],
+                sanitizedTitle: $row['sanitizedTitle'],
                 dateModified: $row['date_modified'],
                 languages: $row['languages'],
                 publishers: $row['publishers'],
@@ -71,6 +87,7 @@ final readonly class ZxProdsRepository
             $this->db->insert(Tables::zx_prods->name, [
                 'id' => $data->id,
                 'title' => $data->title,
+                'sanitizedTitle' => $data->sanitizedTitle,
                 'date_modified' => $data->dateModified,
                 'languages' => $data->languages,
                 'publishers' => $data->publishers,
@@ -92,6 +109,7 @@ final readonly class ZxProdsRepository
         try {
             $this->db->update(Tables::zx_prods->name, [
                 'title' => $data->title,
+                'sanitizedTitle' => $data->sanitizedTitle,
                 'date_modified' => $data->dateModified,
                 'languages' => $data->languages,
                 'publishers' => $data->publishers,

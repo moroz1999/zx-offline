@@ -6,6 +6,7 @@ enum TaskTypes
 {
     case sync_prods;
     case sync_releases;
+    case build_titles;
     case check_prod_releases;
     case check_failed_files;
     case delete_release_file;

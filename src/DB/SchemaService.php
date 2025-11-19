@@ -103,6 +103,7 @@ readonly class SchemaService
 
             $prods->addColumn('id', 'integer');
             $prods->addColumn('title', 'string');
+            $prods->addColumn('sanitizedTitle', 'string');
             $prods->addColumn('date_modified', 'integer');
             $prods->addColumn('languages', 'string')->setNotnull(false);
             $prods->addColumn('publishers', 'string')->setNotnull(false);
@@ -138,6 +139,7 @@ readonly class SchemaService
             $releases->addColumn('date_modified', 'integer');
 
             $releases->setPrimaryKey(['id']);
+            $releases->addIndex(['prod_id'], 'idx_prod');
 
             $this->executeSchema($schema);
             $this->logger->info('Releases table created.');

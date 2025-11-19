@@ -5,6 +5,7 @@ namespace App\Sync;
 
 use App\Api\ZxArtApiProdsRequester;
 use App\Api\ZxProdApiDto;
+use App\Archive\NameSanitizer;
 use App\Tasks\TasksRepository;
 use App\Tasks\TaskTypes;
 use App\ZxProds\ZxProdRecord;
@@ -22,6 +23,7 @@ final readonly class ZxProdsSyncService
         private LoggerInterface        $logger,
         private ZxReleasesRepository   $zxReleasesRepository,
         private ZxReleasesSyncService  $zxReleasesSyncService,
+        private NameSanitizer          $nameSanitizer,
     )
     {
     }
@@ -71,6 +73,7 @@ final readonly class ZxProdsSyncService
         return new ZxProdRecord(
             id: $dto->id,
             title: $dto->title,
+            sanitizedTitle: $this->nameSanitizer->sanitizeWithArticleHandling($dto->title),
             dateModified: $dto->dateModified,
             languages: $dto->languages,
             publishers: $dto->publishers,
