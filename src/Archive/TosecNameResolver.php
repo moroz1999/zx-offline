@@ -60,8 +60,8 @@ final class TosecNameResolver
 
         // For 'tr' flag, use detected list if present; otherwise fallback to release/prod
         $dumpLanguages = $dumpFlagCode === 'tr'
-            ? (!empty($detectedList)
-                ? implode(', ', $detectedList)
+            ? (!empty($languages)
+                ? $languages
                 : $this->resolveDumpLanguagesForFlag($dumpFlagCode, $prod, $release))
             : null;
 

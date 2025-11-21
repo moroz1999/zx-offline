@@ -103,7 +103,6 @@ readonly class TaskRunner
 
     private function runCheckReleaseFiles(int $zxReleaseId): void
     {
-        exit();
         $this->zxReleaseFilesChecker->syncReleaseFiles($zxReleaseId);
     }
 
