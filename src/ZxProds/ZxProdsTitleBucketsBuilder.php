@@ -11,7 +11,7 @@ final class ZxProdsTitleBucketsBuilder
 {
     private const MAX_ITEMS_PER_BUCKET = 200;
     private const MAX_PREFIX_LENGTH = 2;
-    private const NUMERIC_BUCKET = '0-1';
+    private const NUMERIC_BUCKET = '0-9';
 
     public function __construct(
         private readonly ZxProdsRepository        $zxProdsRepository,
