@@ -49,7 +49,7 @@ final class ZxProdsTitleBucketsBuilder
                 );
             }
 
-            $prod = $this->zxProdsRepository->getById((int)$prodId);
+            $prod = $this->zxProdsRepository->getById($prodId);
 
             if ($prod === null) {
                 $this->logger->warning(
@@ -187,18 +187,34 @@ final class ZxProdsTitleBucketsBuilder
 
             $count = count($titlesForLetter);
 
+            if ($letter === self::NUMERIC_BUCKET) {
+                if ($count > 0) {
+                    $bucketKeys[] = self::NUMERIC_BUCKET;
+                }
+                continue;
+            }
+
             if ($count <= self::MAX_ITEMS_PER_BUCKET) {
-                // один бакет = одна буква
                 $bucketKeys[] = $letter;
                 continue;
             }
 
-            // много — режем по 200
             $chunks = array_chunk($titlesForLetter, self::MAX_ITEMS_PER_BUCKET);
 
-            foreach ($chunks as $chunk) {
+            foreach ($chunks as $index => $chunk) {
+                if ($index === 0) {
+                    $bucketKeys[] = $letter;
+                    continue;
+                }
+
                 $firstTitle = $chunk[0];
-                $prefix = substr($firstTitle, 0, self::MAX_PREFIX_LENGTH);
+                $prefixLength = min(self::MAX_PREFIX_LENGTH, strlen($firstTitle));
+                $prefix = substr($firstTitle, 0, $prefixLength);
+
+                if ($prefix === '') {
+                    $prefix = $letter;
+                }
+
                 $bucketKeys[] = $prefix;
             }
         }
