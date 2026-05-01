@@ -1,0 +1,19 @@
+services:
+  cli:
+    build:
+      context: ./docker/php
+    container_name: zx-offline-cli
+    working_dir: /app
+    volumes:
+      - ./:/app
+    environment:
+      - APP_ENV=local
+    entrypoint: ["php", "cli.php"]
+
+  composer:
+    image: composer:2
+    container_name: zx-offline-composer
+    working_dir: /app
+    volumes:
+      - ./:/app
+    entrypoint: ["composer"]
