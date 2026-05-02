@@ -14,6 +14,7 @@ final class TosecNameResolver
         private readonly NameSanitizer            $nameSanitizer,
         private readonly HardwarePlatformResolver $hardwarePlatformResolver,
         private readonly FilenameLanguageDetector $filenameLanguageDetector,
+        private readonly LanguageCodeRegistry     $languageCodeRegistry,
     )
     {
     }
@@ -55,15 +56,11 @@ final class TosecNameResolver
         $isPublicDomain = in_array($prod->legalStatus, ['allowed', 'allowedzxart'], true);
         $extension = strtolower(pathinfo($fileDto->originalFileName, PATHINFO_EXTENSION));
 
-        // Dump flag atoms
-        $dumpFlagCode = $this->resolveDumpFlagCode($prod, $release, $duplicateIndex);
+        $translationLanguages = $this->resolveTranslationLanguages($prod, $release);
 
-        // For 'tr' flag, use detected list if present; otherwise fallback to release/prod
-        $dumpLanguages = $dumpFlagCode === 'tr'
-            ? (!empty($languages)
-                ? $languages
-                : $this->resolveDumpLanguagesForFlag($dumpFlagCode, $prod, $release))
-            : null;
+        // Dump flag atoms
+        $dumpFlagCode = $this->resolveDumpFlagCode($prod, $release, $duplicateIndex, $translationLanguages);
+        $dumpLanguages = $dumpFlagCode === 'tr' ? $translationLanguages : null;
 
         $dumpYear = $this->buildDumpYear($release);
         $dumpPublisher = $this->buildDumpPublisher($release);
@@ -88,7 +85,12 @@ final class TosecNameResolver
     }
 
     /** Returns 'p','a','h','tr','b', or null when no flag. */
-    private function resolveDumpFlagCode(ZxProdRecord $prod, ZxReleaseRecord $release, int $index): ?string
+    private function resolveDumpFlagCode(
+        ZxProdRecord $prod,
+        ZxReleaseRecord $release,
+        int $index,
+        ?string $translationLanguages
+    ): ?string
     {
         // Legal-status driven
         if (in_array($prod->legalStatus, ['forbidden', 'forbiddenzxart', 'insales'], true)) {
@@ -103,12 +105,16 @@ final class TosecNameResolver
             'crack' => 'h',
             'mod' => 'h',
             'adaptation' => 'h',
-            'localization' => 'tr',
             'rerelease' => 'a',
             'mia' => 'b',
             'corrupted' => 'b',
             'incomplete' => 'b',
         ];
+        if (in_array($release->releaseType, ['adaptation', 'localization'], true)) {
+            if ($translationLanguages !== null) {
+                return 'tr';
+            }
+        }
         $code = $roleBasedFlags[$release->releaseType] ?? null;
         if ($code) {
             return $code;
@@ -122,14 +128,24 @@ final class TosecNameResolver
         return null;
     }
 
-    /** Uppercase languages for 'tr' flag; null otherwise. */
-    private function resolveDumpLanguagesForFlag(?string $flagCode, ZxProdRecord $prod, ZxReleaseRecord $release): ?string
+    /** Uppercase release languages for translation-like releases when they differ from the base product. */
+    private function resolveTranslationLanguages(ZxProdRecord $prod, ZxReleaseRecord $release): ?string
     {
-        if ($flagCode !== 'tr') {
+        if (!in_array($release->releaseType, ['adaptation', 'localization'], true)) {
             return null;
         }
-        $langs = trim($release->languages ?: $prod->languages ?: '');
-        return $langs ? strtoupper($langs) : null;
+
+        $releaseLanguages = $this->normalizeLanguageList($release->languages);
+        if ($releaseLanguages === []) {
+            return null;
+        }
+
+        $baseLanguages = $this->normalizeLanguageList($prod->languages);
+        if ($this->sameLanguageSet($releaseLanguages, $baseLanguages)) {
+            return null;
+        }
+
+        return implode(', ', $releaseLanguages);
     }
 
     /** Year included in dump flag, or null. */
@@ -153,17 +169,60 @@ final class TosecNameResolver
         if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
             $langs = $prod->languages ?: '';
         }
-        return strtoupper($langs);
+        $normalized = $this->normalizeLanguageList($langs);
+        return $normalized === [] ? null : implode(', ', $normalized);
     }
 
     private function resolveLanguagesForFile(FileRecord $file, ZxProdRecord $prod, ZxReleaseRecord $release): ?string
     {
+        if (in_array($release->releaseType, ['localization', 'mod', 'adaptation', 'crack'], true)) {
+            return $this->makeLanguages($prod, $release);
+        }
+
         // Prefer filename languages; fallback to prod/release
         $detected = $this->filenameLanguageDetector->detectAll($file->originalFileName);
         if (!empty($detected)) {
             return implode(', ', $detected);
         }
         return $this->makeLanguages($prod, $release);
+    }
+
+    /** @return list<string> */
+    private function normalizeLanguageList(?string $languages): array
+    {
+        if ($languages === null) {
+            return [];
+        }
+
+        $parts = preg_split('/\s*,\s*/', trim($languages), -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        $result = [];
+        $seen = [];
+
+        foreach ($parts as $part) {
+            $normalized = $this->languageCodeRegistry->normalize($part);
+            if ($normalized === null) {
+                continue;
+            }
+
+            $upper = strtoupper($normalized);
+            if (isset($seen[$upper])) {
+                continue;
+            }
+
+            $seen[$upper] = true;
+            $result[] = $upper;
+        }
+
+        return $result;
+    }
+
+    /** @param list<string> $left @param list<string> $right */
+    private function sameLanguageSet(array $left, array $right): bool
+    {
+        sort($left);
+        sort($right);
+
+        return $left === $right;
     }
 
     private function makeMediaPart(

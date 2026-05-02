@@ -112,7 +112,7 @@ final readonly class ZxReleaseFilesChecker
             $baseName = $this->tosecNameFormatter->toBaseName($tosecDto);
             $extras = $this->tosecNameFormatter->toExtras($tosecDto);
             $duplicateIndex++;
-        } while ($this->filesRepository->existsFileName($tosecName));
+        } while ($this->filesRepository->existsFileName($tosecName, $fileRecord->id));
 
         $relativePaths = $this->fileDirectoryResolver->resolve($prod, $release, $baseName);
         array_map(fn(string $path) => $this->fileArchiveService->checkPath($path), $relativePaths);

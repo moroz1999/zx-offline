@@ -122,15 +122,23 @@ final readonly class FilesRepository
         );
     }
 
-    public function existsFileName(string $fileName): bool
+    public function existsFileName(string $fileName, ?int $exceptFileId = null): bool
     {
         $qb = $this->db->createQueryBuilder();
-        return (bool)$qb
+        $qb
             ->select('1')
             ->from(Tables::files->name)
             ->where('file_name = :name')
             ->setParameter('name', $fileName)
-            ->setMaxResults(1)
+            ->setMaxResults(1);
+
+        if ($exceptFileId !== null) {
+            $qb
+                ->andWhere('id != :except_file_id')
+                ->setParameter('except_file_id', $exceptFileId);
+        }
+
+        return (bool)$qb
             ->executeQuery()
             ->fetchOne();
     }

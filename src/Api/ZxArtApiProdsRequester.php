@@ -11,9 +11,11 @@ use JsonException;
 final readonly class ZxArtApiProdsRequester
 {
     private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:title/sortOrder:asc/filter:zxProdNotStatus=insales';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:title/sortOrder:asc/';
     private const PAGE_SIZE = 1000;
 //    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxReleaseHardware=zxnext';
-//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=93046';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdId=109114';
+//    private const BASE_URL = 'https://zxart.ee/api/language:eng/export:zxProd/preset:offline/sortParameter:id/sortOrder:asc/filter:zxProdFirstLetter=s';
 //    private const PAGE_SIZE = 10;
 
     public function __construct(
