@@ -1,10 +1,4 @@
 /vendor/
 /files/
-/storage/
 /.idea/
-/offline0.1/
-/offline0.2/
-/offline0.3/
-/offline0.4/
-/offline0.5/
-/offline0.6/
+/logs/

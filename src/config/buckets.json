@@ -1,145 +1,942 @@
 {
     "ZX Spectrum": {
         "Games": [
+            "0-9",
+            "a",
+            "ai",
+            "an",
+            "as",
+            "b",
+            "be",
+            "bl",
+            "bo",
+            "bu",
+            "c",
+            "ca",
+            "ch",
+            "co",
+            "cr",
+            "d",
+            "de",
+            "di",
+            "dr",
+            "e",
+            "es",
+            "f",
+            "fl",
+            "fr",
+            "g",
+            "gl",
+            "gu",
+            "h",
+            "hi",
+            "hy",
+            "i",
+            "ir",
+            "j",
+            "jo",
+            "k",
+            "ko",
+            "l",
+            "le",
+            "lu",
+            "m",
+            "ma",
+            "me",
+            "mi",
+            "mo",
+            "n",
+            "no",
+            "o",
+            "ov",
+            "p",
+            "pe",
+            "pi",
+            "pr",
+            "q",
+            "r",
+            "re",
+            "ro",
             "s",
             "se",
-            "sh",
-            "sm",
-            "so",
+            "si",
+            "sn",
             "sp",
             "st",
             "st",
-            "su"
+            "su",
+            "t",
+            "te",
+            "to",
+            "tr",
+            "u",
+            "v",
+            "w",
+            "wi",
+            "x",
+            "y",
+            "z",
+            "zx"
         ],
         "Educational": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z"
         ],
         "Compilation": [
-            "s"
-        ],
-        "Applications": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z"
         ],
         "Misc": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "v",
+            "w",
+            "y",
+            "z"
+        ],
+        "Applications": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z"
         ],
         "Demoscene": [
+            "0-9",
+            "a",
+            "al",
+            "ar",
+            "b",
+            "be",
+            "bo",
+            "c",
+            "ch",
+            "co",
+            "cr",
+            "d",
+            "de",
+            "di",
+            "do",
+            "e",
+            "et",
+            "f",
+            "fl",
+            "ft",
+            "g",
+            "gi",
+            "go",
+            "h",
+            "hb",
+            "hu",
+            "i",
+            "in",
+            "j",
+            "k",
+            "ko",
+            "l",
+            "li",
+            "m",
+            "ma",
+            "mi",
+            "mo",
+            "mu",
+            "n",
+            "no",
+            "o",
+            "p",
+            "pi",
+            "pr",
+            "q",
+            "r",
+            "re",
+            "ro",
             "s",
             "se",
             "si",
             "so",
             "sp",
-            "st"
+            "st",
+            "t",
+            "th",
+            "tr",
+            "u",
+            "v",
+            "w",
+            "wo",
+            "x",
+            "y",
+            "z"
         ],
         "System Software": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "co",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "mo",
+            "n",
+            "o",
+            "p",
+            "pu",
+            "q",
+            "r",
             "s",
-            "sm",
-            "sp"
+            "so",
+            "su",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z"
         ],
         "Press": [
+            "0-9",
+            "a",
+            "b",
+            "bu",
+            "c",
+            "d",
+            "e",
+            "f",
+            "fl",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "lp",
+            "m",
+            "n",
+            "ni",
+            "o",
+            "ou",
+            "p",
+            "r",
             "s",
-            "sp"
+            "sp",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z",
+            "zx"
         ],
         "Series": [
-            "s"
+            "0-9",
+            "b",
+            "c",
+            "e",
+            "h",
+            "l",
+            "m",
+            "s",
+            "u",
+            "v",
+            "w"
         ]
     },
     "ZX81": {
         "Games": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "y",
+            "z"
+        ],
+        "Demoscene": [
+            "0-9",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "k",
+            "l",
+            "m",
+            "n",
+            "p",
+            "r",
+            "s",
+            "t",
+            "v",
+            "w",
+            "z"
+        ],
+        "System Software": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "j",
+            "k",
+            "l",
+            "m",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "z"
         ],
         "Applications": [
-            "s"
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "v",
+            "w",
+            "z"
         ],
         "Compilation": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "f",
+            "g",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "p",
+            "q",
+            "s",
+            "t",
+            "v",
+            "z"
         ],
         "Educational": [
-            "s"
-        ],
-        "System Software": [
-            "s"
-        ],
-        "Demoscene": [
-            "s"
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "r",
+            "s",
+            "t",
+            "v"
         ],
         "Misc": [
-            "s"
-        ]
-    },
-    "eLeMeNt ZX": {
-        "Press": [
-            "s"
-        ],
-        "Demoscene": [
-            "s"
-        ],
-        "Games": [
-            "s"
-        ],
-        "System Software": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "z"
         ]
     },
     "Sam Coupe": {
-        "Games": [
-            "s"
+        "Demoscene": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "z"
         ],
-        "Applications": [
-            "s"
+        "Games": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "m",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "v",
+            "w",
+            "x",
+            "z"
         ],
         "System Software": [
-            "s"
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "h",
+            "i",
+            "k",
+            "m",
+            "p",
+            "r",
+            "s",
+            "t",
+            "v",
+            "y",
+            "z"
         ],
-        "Demoscene": [
-            "s"
+        "Compilation": [
+            "c",
+            "i",
+            "l",
+            "m"
+        ],
+        "Applications": [
+            "c",
+            "e",
+            "f",
+            "g",
+            "o",
+            "p",
+            "s",
+            "t"
         ],
         "Press": [
-            "s"
-        ]
-    },
-    "ATM": {
-        "Games": [
-            "s"
+            "a",
+            "b",
+            "e",
+            "f",
+            "k",
+            "n",
+            "p",
+            "r",
+            "s",
+            "v",
+            "z"
         ],
-        "System Software": [
-            "s"
+        "Educational": [
+            "d",
+            "h",
+            "r"
         ],
-        "Demoscene": [
-            "s"
-        ]
-    },
-    "TS-Config": {
-        "Demoscene": [
-            "s"
-        ],
-        "Games": [
-            "s"
-        ]
-    },
-    "ZX Spectrum Next": {
-        "Games": [
-            "s"
-        ],
-        "Demoscene": [
-            "s"
-        ],
-        "Applications": [
-            "s"
-        ]
-    },
-    "Sinclair QL": {
-        "Games": [
-            "s"
-        ]
-    },
-    "ZX-Uno": {
-        "Games": [
-            "s"
+        "Misc": [
+            "e"
         ]
     },
     "ZX80": {
         "Games": [
+            "d",
+            "e",
+            "g",
+            "k",
+            "m",
+            "o",
+            "q",
+            "r",
+            "s",
+            "t",
+            "z"
+        ],
+        "Applications": [
+            "p"
+        ],
+        "Educational": [
+            "c"
+        ]
+    },
+    "ATM": {
+        "Games": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "g",
+            "h",
+            "i",
+            "k",
+            "l",
+            "m",
+            "n",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "x",
+            "z"
+        ],
+        "System Software": [
+            "a",
+            "c",
+            "d",
+            "f",
+            "h",
+            "i",
+            "n",
+            "p",
+            "s",
+            "t"
+        ],
+        "Applications": [
+            "a",
+            "z"
+        ],
+        "Demoscene": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "f",
+            "g",
+            "h",
+            "i",
+            "j",
+            "k",
+            "l",
+            "n",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "v"
+        ],
+        "Press": [
+            "a"
+        ]
+    },
+    "eLeMeNt ZX": {
+        "System Software": [
+            "a",
+            "l",
+            "n",
+            "s",
+            "w"
+        ],
+        "Press": [
+            "s"
+        ],
+        "Games": [
+            "h",
+            "m",
+            "n",
+            "r",
+            "s",
+            "t"
+        ],
+        "Demoscene": [
+            "a",
+            "d",
+            "e",
+            "f",
+            "h",
+            "l",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t"
+        ],
+        "Applications": [
+            "c",
+            "l"
+        ]
+    },
+    "GMX": {
+        "Applications": [
+            "a",
+            "z"
+        ],
+        "Games": [
+            "e",
+            "p"
+        ],
+        "System Software": [
+            "f",
+            "g",
+            "o",
+            "p",
+            "v"
+        ]
+    },
+    "Sinclair QL": {
+        "Games": [
+            "b",
+            "c",
+            "f",
+            "i",
+            "j",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "q",
+            "r",
+            "s",
+            "t",
+            "v"
+        ],
+        "Educational": [
+            "m"
+        ],
+        "Press": [
+            "c",
+            "q"
+        ],
+        "System Software": [
+            "e"
+        ],
+        "Compilation": [
+            "q"
+        ]
+    },
+    "TS-Config": {
+        "Games": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "h",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "s",
+            "t",
+            "u",
+            "w",
+            "x",
+            "z"
+        ],
+        "Demoscene": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "j",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "p",
+            "r",
+            "s",
+            "t",
+            "u",
+            "w",
+            "y",
+            "z"
+        ],
+        "Compilation": [
+            "l",
+            "t"
+        ],
+        "System Software": [
+            "p",
+            "w"
+        ],
+        "Applications": [
+            "z"
+        ]
+    },
+    "ZX-Uno": {
+        "Games": [
+            "h",
+            "m",
+            "n",
+            "r",
+            "s"
+        ],
+        "Demoscene": [
+            "n",
+            "r"
+        ],
+        "System Software": [
+            "l"
+        ]
+    },
+    "Sprinter": {
+        "Applications": [
+            "z"
+        ],
+        "Games": [
+            "j",
+            "m",
+            "t"
+        ],
+        "System Software": [
+            "a"
+        ],
+        "Demoscene": [
+            "b",
+            "d"
+        ]
+    },
+    "ZX Spectrum Next": {
+        "Games": [
+            "0-9",
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f",
+            "g",
+            "h",
+            "i",
+            "k",
+            "l",
+            "m",
+            "n",
+            "o",
+            "q",
+            "r",
+            "s",
+            "t",
+            "u",
+            "v",
+            "w",
+            "x",
+            "z"
+        ],
+        "Compilation": [
+            "l",
+            "m"
+        ],
+        "Demoscene": [
+            "d",
+            "n",
+            "r",
+            "s",
+            "t",
+            "z"
+        ],
+        "System Software": [
+            "a",
+            "c",
+            "k",
+            "n",
+            "o",
+            "p",
+            "z"
+        ],
+        "Press": [
+            "n"
+        ],
+        "Misc": [
+            "a",
+            "p"
+        ],
+        "Applications": [
             "s"
         ]
     }
