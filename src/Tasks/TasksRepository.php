@@ -83,6 +83,24 @@ readonly class TasksRepository
     }
 
     /**
+     * Returns interrupted tasks to the queue so they can be picked up again.
+     *
+     * @throws TaskException
+     */
+    public function requeueInProgressTasks(): int
+    {
+        try {
+            return $this->db->update(
+                'tasks',
+                ['status' => TaskStatuses::todo->name],
+                ['status' => TaskStatuses::in_progress->name],
+            );
+        } catch (Throwable $e) {
+            throw new TaskException("Error requeuing interrupted tasks: {$e->getMessage()}");
+        }
+    }
+
+    /**
      * @throws TaskException
      */
     public function addTask(TaskTypes $type, ?string $targetId = null): void

@@ -48,8 +48,14 @@ Defined in `src/Tasks/TaskTypes.php`:
 5. `TaskRunner` dispatches by task type.
 6. On success, task becomes `done`; on exception, `failed`.
 
+If processing is interrupted after a task is locked, `php cli.php resume`
+returns all `in_progress` tasks to `todo` and drains the existing queue. It does
+not enqueue `sync_prods` or otherwise start synchronization from scratch.
+
 ## Notes
 
 - Queue order is FIFO by `created_at`.
 - The queue is simple and local. There is no external worker system.
 - Because `run:daemon` spawns child CLI processes, task execution is isolated per task.
+- Run only one queue worker at a time; `resume` treats every `in_progress` task
+  as interrupted.

@@ -31,7 +31,9 @@ Queues retry processing for files that have no final stored path.
 
 ### `php cli.php resume`
 
-Continues processing tasks already present in the queue.
+Continues processing tasks already present in the queue without creating a new
+full-sync task. Interrupted `in_progress` tasks are returned to `todo` first,
+then the queue is drained in the normal order.
 
 ### `php cli.php run:daemon`
 

@@ -60,6 +60,13 @@ docker compose run --rm cli run:task <id>
 docker compose run --rm cli run:daemon
 ```
 
+Continue the existing queue after an interruption, without starting a new full
+synchronization:
+
+```bash
+docker compose run --rm cli resume
+```
+
 ## Local PHP Usage
 
 If PHP 8.2+ is installed locally, commands can also be run without Docker:
@@ -69,5 +76,6 @@ composer install
 php ./cli.php list
 php ./cli.php sync
 php ./cli.php sync:releases
+php ./cli.php resume
 php ./cli.php reset
 ```
